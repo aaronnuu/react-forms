@@ -358,18 +358,6 @@ class ReactForms extends Component {
     }));
   }
 
-  getNewFieldsWithErrors (fields, errors) {
-    // Get the appropriate error from the returned error object
-    // and return a new fields object
-    return Object.keys(fields).reduce((acc, name) => {
-      acc[name] = {
-        ...fields[name],
-        error: get(errors, name, null)
-      };
-      return acc;
-    }, {});
-  }
-
   submitForm (e) {
     const { isSubmitting } = this.state;
 
@@ -384,22 +372,10 @@ class ReactForms extends Component {
 
       if (isPromise(maybePromisedErrors)) {
         maybePromisedErrors.then(errors => {
-          this.setState(prevState => ({
-            ...prevState,
-            fields: this.getNewFieldsWithErrors(prevState.fields, errors),
-            isValidating: false
-          }));
-        }, this.executeSubmit);
+          this.setErrors(errors, false, true).then(this.executeSubmit);
+        });
       } else {
-        this.setState(
-          prevState => ({
-            ...prevState,
-            fields: this.getNewFieldsWithErrors(
-              prevState.fields,
-              maybePromisedErrors
-            ),
-            isValidating: false
-          }),
+        this.setErrors(maybePromisedErrors, false, true).then(
           this.executeSubmit
         );
       }

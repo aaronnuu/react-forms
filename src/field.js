@@ -419,6 +419,7 @@ class Field extends Component {
       initialValue,
       reactForms,
       sendImmediate,
+      shouldUnregister,
       Component: InputComponent,
       children,
       render,
