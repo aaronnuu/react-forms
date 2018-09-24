@@ -1,0 +1,35 @@
+{
+  "presets": [
+    [
+      "env",
+      {
+        "useBuiltIns": "usage",
+        "modules": false
+      }
+    ],
+    "stage-3",
+    "react"
+  ],
+  "plugins": [
+    [
+      "transform-runtime",
+      {
+        "helpers": false,
+        "polyfill": false,
+        "regenerator": true
+      }
+    ],
+    "transform-decorators-legacy",
+    "transform-class-properties",
+    "external-helpers"
+  ],
+  "env": {
+    "test": {
+      "presets": [
+        "env",
+        "stage-3",
+        "react"
+      ]
+    }
+  }
+}

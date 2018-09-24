@@ -1,0 +1,11 @@
+// Externals
+node_modules
+
+// Error logs
+yarn-error.log
+
+// Build
+dist
+
+// Misc
+.DS_Store
