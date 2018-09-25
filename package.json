@@ -22,6 +22,7 @@
     "reinstall": "rimraf node_modules && yarn",
     "prebuild": "rimraf dist",
     "build": "rollup -c && size-limit",
+    "prepublish": "yarn build",
     "precommit": "lint-staged",
     "storybook": "start-storybook -p 9001 -c .storybook"
   },

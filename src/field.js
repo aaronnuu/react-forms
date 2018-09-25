@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import get from 'lodash.get';
 import set from 'lodash.set';
 import withContext from './containers/with-context';
-import { noop, isPromise, isFunction, uuid } from './utils';
+import { noop, isPromise, isFunction, isObject, uuid } from './utils';
 
 @withContext
 class Field extends Component {
@@ -60,7 +60,10 @@ class Field extends Component {
             async () => {
               const promises = [];
               if (shouldValidate) {
-                await this.handleValidate();
+                const validation = this.handleValidate();
+                if (isPromise(validation)) {
+                  await validation;
+                }
                 promises.push(this.sendError());
               }
               promises.push(this.sendValue());
@@ -100,7 +103,10 @@ class Field extends Component {
             async () => {
               const promises = [];
               if (shouldValidate) {
-                await this.handleValidate();
+                const validation = this.handleValidate();
+                if (isPromise(validation)) {
+                  await validation;
+                }
                 promises.push(this.sendError());
               }
               promises.push(this.sendTouched());
@@ -121,7 +127,10 @@ class Field extends Component {
             }),
             async () => {
               if (shouldValidate) {
-                await this.handleValidate();
+                const validation = this.handleValidate();
+                if (isPromise(validation)) {
+                  await validation;
+                }
               }
               await Promise.all([
                 this.sendValue(),
@@ -156,7 +165,10 @@ class Field extends Component {
     });
 
     if (validateOnMount) {
-      await this.handleValidate();
+      const validation = this.handleValidate();
+      if (isPromise(validation)) {
+        await validation;
+      }
       this.sendError();
     }
   }
@@ -234,19 +246,20 @@ class Field extends Component {
       reactForms: { validateForm }
     } = this.props;
 
-    return new Promise(resolve => {
-      this.setState(
-        prevState => ({
-          ...prevState,
-          isValidating: true
-        }),
-        async () => {
-          if (isFunction(validate)) {
-            const maybePromisedError = validate(value);
+    if (isFunction(validate)) {
+      const maybePromisedError = validate(value);
 
-            if (isPromise(maybePromisedError)) {
+      // Either return a promise or don't return anything
+      // to ensure that we make as few updates as possible
+      if (isPromise(maybePromisedError)) {
+        return new Promise(resolve => {
+          this.setState(
+            prevState => ({
+              ...prevState,
+              isValidating: true
+            }),
+            async () => {
               const error = await maybePromisedError;
-
               this.setState(
                 prevState => ({
                   ...prevState,
@@ -255,21 +268,27 @@ class Field extends Component {
                 }),
                 resolve
               );
-            } else {
-              this.setState(
-                prevState => ({
-                  ...prevState,
-                  error: maybePromisedError || null,
-                  isValidating: false
-                }),
-                resolve
-              );
             }
-          } else if (isFunction(validateForm)) {
-            const values = set({}, name, value);
-            const maybePromisedErrors = validateForm(values);
+          );
+        });
+      } else {
+        this.setState(prevState => ({
+          ...prevState,
+          error: maybePromisedError || null
+        }));
+      }
+    } else if (isFunction(validateForm)) {
+      const values = set({}, name, value);
+      const maybePromisedErrors = validateForm(values);
 
-            if (isPromise(maybePromisedErrors)) {
+      if (isPromise(maybePromisedErrors)) {
+        return new Promise(resolve => {
+          this.setState(
+            prevState => ({
+              ...prevState,
+              isValidating: true
+            }),
+            async () => {
               const errors = await maybePromisedErrors;
 
               this.setState(
@@ -280,34 +299,22 @@ class Field extends Component {
                 }),
                 resolve
               );
-            } else {
-              this.setState(
-                prevState => ({
-                  ...prevState,
-                  error: get(maybePromisedErrors, name, null),
-                  isValidating: false
-                }),
-                resolve
-              );
             }
-          } else {
-            this.setState(
-              prevState => ({
-                ...prevState,
-                isValidating: false
-              }),
-              resolve
-            );
-          }
-        }
-      );
-    });
+          );
+        });
+      } else {
+        this.setState(prevState => ({
+          ...prevState,
+          error: get(maybePromisedErrors, name, null)
+        }));
+      }
+    }
   }
 
   handleFocus (e) {
     const { onFocus } = this.props;
 
-    if (e && e.persist) {
+    if (isObject(e) && e.persist) {
       e.persist();
     }
 
@@ -326,7 +333,7 @@ class Field extends Component {
       reactForms: { validateOnChange, touchOnChange }
     } = this.props;
 
-    if (e && e.persist) {
+    if (isObject(e) && e.persist) {
       e.persist();
     }
 
@@ -354,7 +361,10 @@ class Field extends Component {
         }
 
         if (validateOnChange) {
-          await this.handleValidate();
+          const validation = this.handleValidate();
+          if (isPromise(validation)) {
+            await validation;
+          }
           if (sendImmediate || !this.state.focused) {
             this.sendError();
           }
@@ -369,7 +379,7 @@ class Field extends Component {
       reactForms: { validateOnBlur, touchOnBlur }
     } = this.props;
 
-    if (e && e.persist) {
+    if (isObject(e) && e.persist) {
       e.persist();
     }
 
@@ -386,7 +396,10 @@ class Field extends Component {
         this.sendTouched();
 
         if (validateOnBlur) {
-          await this.handleValidate();
+          const validation = this.handleValidate();
+          if (isPromise(validation)) {
+            await validation;
+          }
         }
 
         this.sendError();
