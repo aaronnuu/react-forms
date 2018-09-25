@@ -52,9 +52,10 @@ class ReactForms extends Component {
     this.getTouched = this.getTouched.bind(this);
     this.getErrors = this.getErrors.bind(this);
     this.runValidations = this.runValidations.bind(this);
+    this.executeSubmit = this.executeSubmit.bind(this);
     this.submitForm = this.submitForm.bind(this);
-    this.getActions = this.getActions.bind(this);
     this.getComputedProps = this.getComputedProps.bind(this);
+    this.getActions = this.getActions.bind(this);
     this.getFormState = this.getFormState.bind(this);
   }
 
