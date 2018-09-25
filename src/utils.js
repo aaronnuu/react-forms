@@ -14,6 +14,10 @@ export function isFunction (obj) {
   return obj && typeof obj === 'function';
 }
 
+export function isNullOrUndefined (obj) {
+  return obj === null || obj === undefined;
+}
+
 export function concatenateErrors (errors) {
   return errors.reduce((acc, err) => {
     Object.keys(err).forEach(key => {

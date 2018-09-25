@@ -2,7 +2,14 @@ import React, { Component } from 'react';
 import get from 'lodash.get';
 import set from 'lodash.set';
 import withContext from './containers/with-context';
-import { noop, isPromise, isFunction, isObject, uuid } from './utils';
+import {
+  noop,
+  isPromise,
+  isFunction,
+  isObject,
+  isNullOrUndefined,
+  uuid
+} from './utils';
 
 @withContext
 class Field extends Component {
@@ -24,8 +31,14 @@ class Field extends Component {
 
     super(props);
 
+    const formInitialValue = get(initialValues, name);
+
     this.state = {
-      value: initialValue || get(initialValues, name) || '',
+      value: !isNullOrUndefined(initialValue)
+        ? initialValue
+        : !isNullOrUndefined(formInitialValue)
+          ? formInitialValue
+          : '',
       touched: validateOnMount,
       error: null,
       focused: false,
@@ -121,7 +134,7 @@ class Field extends Component {
           this.setState(
             prevState => ({
               ...prevState,
-              value: value || initialValue,
+              value: !isNullOrUndefined(value) ? value : initialValue,
               touched: validateOnMount,
               error: null
             }),
