@@ -15,7 +15,6 @@ import {
 class Field extends Component {
   static defaultProps = {
     sendImmediate: false,
-    shouldUnregister: true,
     Component: 'input',
     onFocus: noop,
     onChange: noop,
@@ -26,7 +25,12 @@ class Field extends Component {
     const {
       name,
       initialValue,
-      reactForms: { initialValues, validateOnMount }
+      shouldUnregister,
+      reactForms: {
+        initialValues,
+        validateOnMount,
+        shouldUnregister: formShouldUnregister
+      }
     } = props;
 
     super(props);
@@ -46,7 +50,11 @@ class Field extends Component {
     };
 
     this.id = uuid();
+    this.shouldUnregister = !isNullOrUndefined(shouldUnregister)
+      ? shouldUnregister
+      : formShouldUnregister;
 
+    this.setFieldState = this.setFieldState.bind(this);
     this.getRegistrations = this.getRegistrations.bind(this);
     this.handleValidate = this.handleValidate.bind(this);
     this.handleFocus = this.handleFocus.bind(this);
@@ -58,108 +66,127 @@ class Field extends Component {
   getRegistrations (initialValue) {
     const {
       validate,
-      reactForms: { validateOnMount }
+      reactForms: { validateOnMount, validateOnChange, validateOnBlur }
     } = this.props;
 
     return {
       validate,
-      setValue: (value, shouldValidate) => {
-        return new Promise(resolve => {
-          this.setState(
-            prevState => ({
+      setValue: (value, shouldValidate = validateOnChange) => {
+        return new Promise(async resolve => {
+          const promises = [
+            this.setFieldState(prevState => ({
               ...prevState,
               value
-            }),
-            async () => {
-              const promises = [];
-              if (shouldValidate) {
-                const validation = this.handleValidate();
-                if (isPromise(validation)) {
-                  await validation;
-                }
-                promises.push(this.sendError());
-              }
-              promises.push(this.sendValue());
-              await Promise.all(promises);
-              resolve(this.state.value);
+            })),
+            this.sendValue(value)
+          ];
+          if (shouldValidate) {
+            const error = this.handleValidate();
+            if (isPromise(error)) {
+              promises.push(this.sendError(await error));
+            } else {
+              promises.push(this.sendError(error));
             }
-          );
+          }
+
+          await Promise.all(promises);
+
+          resolve(value);
         });
       },
-      setError: (error, shouldTouch) => {
-        return new Promise(resolve => {
-          this.setState(
-            prevState => ({
+      setError: (error, shouldTouch = true) => {
+        return new Promise(async resolve => {
+          const promises = [
+            this.setFieldState(prevState => ({
               ...prevState,
               error,
               touched: !!shouldTouch
-            }),
-            async () => {
-              const promises = [];
-              if (shouldTouch) {
-                promises.push(this.sendTouched());
-              }
-              promises.push(this.sendError());
-              await Promise.all(promises);
-              resolve(this.state.error);
-            }
-          );
+            }))
+          ];
+          if (shouldTouch) {
+            promises.push(this.sendTouched(shouldTouch));
+          }
+          promises.push(this.sendError(error));
+
+          await Promise.all(promises);
+
+          resolve(error);
         });
       },
-      setTouched: (touched, shouldValidate) => {
-        return new Promise(resolve => {
-          this.setState(
-            prevState => ({
+      setTouched: (touched, shouldValidate = validateOnBlur) => {
+        return new Promise(async resolve => {
+          const promises = [
+            this.setFieldState(prevState => ({
               ...prevState,
               touched
-            }),
-            async () => {
-              const promises = [];
-              if (shouldValidate) {
-                const validation = this.handleValidate();
-                if (isPromise(validation)) {
-                  await validation;
-                }
-                promises.push(this.sendError());
-              }
-              promises.push(this.sendTouched());
-              await Promise.all(promises);
-              resolve(this.state.touched);
+            })),
+            this.sendTouched(touched)
+          ];
+          if (shouldValidate) {
+            const error = this.handleValidate();
+            if (isPromise(error)) {
+              promises.push(this.sendError(await error));
+            } else {
+              promises.push(this.sendError(error));
             }
-          );
+          }
+
+          await Promise.all(promises);
+
+          resolve(touched);
         });
       },
-      reset: (value, shouldValidate) => {
-        return new Promise(resolve => {
-          this.setState(
-            prevState => ({
+      reset: (val, shouldValidate = validateOnMount) => {
+        return new Promise(async resolve => {
+          let error = null;
+          const value = !isNullOrUndefined(val) ? val : initialValue;
+          const touched = shouldValidate && validateOnMount;
+
+          const promises = [
+            this.setFieldState(prevState => ({
               ...prevState,
-              value: !isNullOrUndefined(value) ? value : initialValue,
-              touched: validateOnMount,
-              error: null
-            }),
-            async () => {
-              if (shouldValidate) {
-                const validation = this.handleValidate();
-                if (isPromise(validation)) {
-                  await validation;
-                }
-              }
-              await Promise.all([
-                this.sendValue(),
-                this.sendTouched(),
-                this.sendError()
-              ]);
-              resolve({
-                value: this.state.value,
-                touched: this.state.touched,
-                error: this.state.error
-              });
+              value,
+              touched,
+              error
+            })),
+            this.sendValue(value),
+            this.sendTouched(touched),
+            this.sendError(error)
+          ];
+
+          if (shouldValidate) {
+            const validation = this.handleValidate();
+            if (isPromise(validation)) {
+              error = await validation;
+            } else {
+              error = validation;
             }
+          }
+
+          promises.push(this.sendError(error));
+          promises.push(
+            this.setFieldState(prevState => ({
+              ...prevState,
+              error
+            }))
           );
+
+          await Promise.all(promises);
+
+          resolve({
+            value,
+            touched,
+            error
+          });
         });
       }
     };
+  }
+
+  setFieldState (state) {
+    return new Promise(resolve => {
+      this.setState(state, resolve);
+    });
   }
 
   async componentDidMount () {
@@ -178,11 +205,12 @@ class Field extends Component {
     });
 
     if (validateOnMount) {
-      const validation = this.handleValidate();
-      if (isPromise(validation)) {
-        await validation;
+      const error = this.handleValidate();
+      if (isPromise(error)) {
+        this.sendError(await error);
+      } else {
+        this.sendError(error);
       }
-      this.sendError();
     }
   }
 
@@ -192,15 +220,24 @@ class Field extends Component {
       name,
       shouldUnregister,
       reactForms: {
-        shouldUnregister: parentShouldUnregister,
+        shouldUnregister: formShouldUnregister,
         registerField,
         unregisterField
       }
     } = this.props;
-    const { name: prevName } = prevProps;
+    const {
+      name: prevName,
+      shouldUnregister: prevShouldUnregister
+    } = prevProps;
+
+    if (shouldUnregister !== prevShouldUnregister) {
+      this.shouldUnregister = !isNullOrUndefined(shouldUnregister)
+        ? shouldUnregister
+        : formShouldUnregister;
+    }
 
     if (name !== prevName) {
-      if (shouldUnregister && parentShouldUnregister) {
+      if (this.shouldUnregister) {
         unregisterField(this.id);
       }
       registerField(name, {
@@ -216,15 +253,15 @@ class Field extends Component {
   componentWillUnmount () {
     const {
       shouldUnregister,
-      reactForms: { shouldUnregister: parentShouldUnregister, unregisterField }
+      reactForms: { unregisterField }
     } = this.props;
 
-    if (shouldUnregister && parentShouldUnregister) {
+    if (shouldUnregister) {
       unregisterField(this.id);
     }
   }
 
-  sendState (state) {
+  sendValue (value) {
     const {
       name,
       reactForms: { setFormState }
@@ -234,21 +271,51 @@ class Field extends Component {
       ...prevState,
       fields: {
         ...prevState.fields,
-        [name]: set({ ...prevState.fields[name] }, state, this.state[state])
+        [name]: set(
+          { ...prevState.fields[name] },
+          'value',
+          value || this.state.value
+        )
       }
     }));
   }
 
-  sendValue () {
-    return this.sendState('value');
+  sendTouched (touched) {
+    const {
+      name,
+      reactForms: { setFormState }
+    } = this.props;
+
+    return setFormState(prevState => ({
+      ...prevState,
+      fields: {
+        ...prevState.fields,
+        [name]: set(
+          { ...prevState.fields[name] },
+          'touched',
+          touched || this.state.touched
+        )
+      }
+    }));
   }
 
-  sendError () {
-    return this.sendState('error');
-  }
+  sendError (error) {
+    const {
+      name,
+      reactForms: { setFormState }
+    } = this.props;
 
-  sendTouched () {
-    return this.sendState('touched');
+    return setFormState(prevState => ({
+      ...prevState,
+      fields: {
+        ...prevState.fields,
+        [name]: set(
+          { ...prevState.fields[name] },
+          'error',
+          error || this.state.error
+        )
+      }
+    }));
   }
 
   handleValidate () {
@@ -260,66 +327,62 @@ class Field extends Component {
     } = this.props;
 
     if (isFunction(validate)) {
-      const maybePromisedError = validate(value);
+      const maybePromisedError = validate(value) || null;
 
       // Either return a promise or don't return anything
       // to ensure that we make as few updates as possible
       if (isPromise(maybePromisedError)) {
-        return new Promise(resolve => {
-          this.setState(
-            prevState => ({
-              ...prevState,
-              isValidating: true
-            }),
-            async () => {
-              const error = await maybePromisedError;
-              this.setState(
-                prevState => ({
-                  ...prevState,
-                  error: error || null,
-                  isValidating: false
-                }),
-                resolve
-              );
-            }
-          );
+        return new Promise(async resolve => {
+          await this.setFieldState(prevState => ({
+            ...prevState,
+            isValidating: true
+          }));
+
+          const error = (await maybePromisedError) || null;
+
+          await this.setFieldState(prevState => ({
+            ...prevState,
+            error: error,
+            isValidating: false
+          }));
+
+          resolve(error);
         });
       } else {
-        this.setState(prevState => ({
+        this.setFieldState(prevState => ({
           ...prevState,
-          error: maybePromisedError || null
+          error: maybePromisedError
         }));
+        return maybePromisedError;
       }
     } else if (isFunction(validateForm)) {
       const values = set({}, name, value);
       const maybePromisedErrors = validateForm(values);
 
       if (isPromise(maybePromisedErrors)) {
-        return new Promise(resolve => {
-          this.setState(
-            prevState => ({
-              ...prevState,
-              isValidating: true
-            }),
-            async () => {
-              const errors = await maybePromisedErrors;
+        return new Promise(async resolve => {
+          await this.setFieldState(prevState => ({
+            ...prevState,
+            isValidating: true
+          }));
 
-              this.setState(
-                prevState => ({
-                  ...prevState,
-                  error: get(errors, name, null),
-                  isValidating: false
-                }),
-                resolve
-              );
-            }
-          );
+          const errors = await maybePromisedErrors;
+
+          await this.setFieldState(prevState => ({
+            ...prevState,
+            error: get(errors, name, null),
+            isValidating: false
+          }));
+
+          resolve(get(errors, name, null));
         });
       } else {
-        this.setState(prevState => ({
+        const error = get(maybePromisedErrors, name, null);
+        this.setFieldState(prevState => ({
           ...prevState,
-          error: get(maybePromisedErrors, name, null)
+          error
         }));
+        return error;
       }
     }
   }
@@ -333,13 +396,14 @@ class Field extends Component {
 
     onFocus(e);
 
-    this.setState(prevState => ({
+    this.setFieldState(prevState => ({
       ...prevState,
       focused: true
     }));
   }
 
-  handleChange (e) {
+  async handleChange (e) {
+    const { focused, touched } = this.state;
     const {
       onChange,
       sendImmediate,
@@ -361,32 +425,33 @@ class Field extends Component {
 
     onChange(e);
 
-    this.setState(
-      prevState => ({
-        ...prevState,
-        value,
-        touched: prevState.touched || !!touchOnChange
-      }),
-      async () => {
-        if (sendImmediate || !this.state.focused) {
-          this.sendValue();
-          this.sendTouched();
-        }
+    this.setFieldState(prevState => ({
+      ...prevState,
+      value,
+      touched: touched || !!touchOnChange
+    }));
 
-        if (validateOnChange) {
-          const validation = this.handleValidate();
-          if (isPromise(validation)) {
-            await validation;
-          }
-          if (sendImmediate || !this.state.focused) {
-            this.sendError();
-          }
+    if (sendImmediate || !focused) {
+      this.sendValue(value);
+      this.sendTouched(touched || !touchOnChange);
+    }
+
+    if (validateOnChange) {
+      const error = this.handleValidate();
+      if (isPromise(error)) {
+        if (sendImmediate || !focused) {
+          this.sendError(await error);
+        }
+      } else {
+        if (sendImmediate || !focused) {
+          this.sendError(error);
         }
       }
-    );
+    }
   }
 
-  handleBlur (e) {
+  async handleBlur (e) {
+    const { touched } = this.state;
     const {
       onBlur,
       reactForms: { validateOnBlur, touchOnBlur }
@@ -398,26 +463,26 @@ class Field extends Component {
 
     onBlur(e);
 
-    this.setState(
-      prevState => ({
-        ...prevState,
-        touched: prevState.touched || !!touchOnBlur,
-        focused: false
-      }),
-      async () => {
-        this.sendValue();
-        this.sendTouched();
+    this.setFieldState(prevState => ({
+      ...prevState,
+      touched: touched || !!touchOnBlur,
+      focused: false
+    }));
 
-        if (validateOnBlur) {
-          const validation = this.handleValidate();
-          if (isPromise(validation)) {
-            await validation;
-          }
-        }
+    this.sendValue();
+    this.sendTouched(touched || !!touchOnBlur);
 
-        this.sendError();
+    if (validateOnBlur) {
+      const error = this.handleValidate();
+      if (isPromise(error)) {
+        this.sendError(await error);
+      } else {
+        this.sendError(error);
       }
-    );
+      return;
+    }
+
+    this.sendError();
   }
 
   getFieldProps () {

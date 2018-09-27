@@ -10,7 +10,7 @@ export default function withForm ({
     const reactFormsProps = {
       ...rest,
       initialValues: mapPropsToValues(props),
-      innerProps: props
+      outerProps: props
     };
     return (
       <ReactForms {...reactFormsProps}>

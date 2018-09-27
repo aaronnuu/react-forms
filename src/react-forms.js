@@ -16,9 +16,9 @@ const { Provider, Consumer } = createContext();
 
 class ReactForms extends Component {
   static defaultProps = {
-    validateOnChange: false,
-    validateOnBlur: true,
     validateOnMount: false,
+    validateOnChange: true,
+    validateOnBlur: true,
     touchOnChange: true,
     touchOnBlur: true,
     shouldUnregister: true,
@@ -55,7 +55,7 @@ class ReactForms extends Component {
     this.executeSubmit = this.executeSubmit.bind(this);
     this.submitForm = this.submitForm.bind(this);
     this.getComputedProps = this.getComputedProps.bind(this);
-    this.getActions = this.getActions.bind(this);
+    this.getFormHelpers = this.getFormHelpers.bind(this);
     this.getFormState = this.getFormState.bind(this);
   }
 
@@ -102,6 +102,8 @@ class ReactForms extends Component {
       const newFields = { ...fields };
       const newInitialValues = { ...this.initialValues };
 
+      // Find and unregister by ID so that fields can swap names
+      // without then unregistering the field that swapped with them
       const name = Object.keys(newFields).find(fieldName => {
         if (fields[fieldName].id === id) {
           return true;
@@ -130,7 +132,7 @@ class ReactForms extends Component {
     });
   }
 
-  setValues (values, merge = true, shouldValidate = false) {
+  setValues (values, merge = true, shouldValidate) {
     const { fields } = this.state;
     const promises = [];
     Object.keys(fields).forEach(name => {
@@ -172,21 +174,23 @@ class ReactForms extends Component {
     }
   }
 
-  setTouched (touched) {
+  setTouched (touched, shouldValidate) {
     const { fields } = this.state;
     const promises = [];
     Object.keys(fields).forEach(name => {
-      promises.push(fields[name].setTouched(get(touched, name, false)));
+      promises.push(
+        fields[name].setTouched(get(touched, name, false), shouldValidate)
+      );
     });
     return Promise.all(promises);
   }
 
-  setFieldTouched (name, touched) {
+  setFieldTouched (name, touched, shouldValidate) {
     const { fields } = this.state;
     if (!fields[name]) {
       throw new Error(`Field ${name} does not exist`);
     } else {
-      return fields[name].setTouched(touched);
+      return fields[name].setTouched(touched, shouldValidate);
     }
   }
 
@@ -272,7 +276,7 @@ class ReactForms extends Component {
     // If both have validated the same field use
     // the field specific error
 
-    // IF there are async validators then overwrite
+    // If there are async validators then overwrite
     // the sync errors with those
     Object.keys(fields).forEach(name => {
       const fieldValidator = fields[name].validate;
@@ -342,14 +346,21 @@ class ReactForms extends Component {
     const isValid = Object.keys(errors).length <= 0;
 
     if (isValid) {
-      const submit = handleSubmit(values, this.getActions());
+      const submit = handleSubmit(values, this.getFormHelpers(true));
       if (isPromise(submit)) {
-        submit.then(() => {
-          this.setState(prevState => ({
-            ...prevState,
-            isSubmitting: false
-          }));
-        });
+        submit
+          .then(() => {
+            this.setState(prevState => ({
+              ...prevState,
+              isSubmitting: false
+            }));
+          })
+          .catch(() => {
+            this.setState(prevState => ({
+              ...prevState,
+              isSubmitting: false
+            }));
+          });
         return;
       }
     }
@@ -393,8 +404,10 @@ class ReactForms extends Component {
     };
   }
 
-  getActions () {
+  getFormHelpers (withProps) {
+    const { outerProps } = this.props;
     return {
+      ...(outerProps && withProps ? { props: outerProps } : {}),
       setValues: this.setValues,
       setFieldValue: this.setFieldValue,
       setErrors: this.setErrors,
@@ -412,7 +425,7 @@ class ReactForms extends Component {
 
     return {
       ...this.getComputedProps(),
-      ...this.getActions(),
+      ...this.getFormHelpers(false),
       ...restState,
       values: this.getValues(),
       touched: this.getTouched(),
@@ -426,9 +439,9 @@ class ReactForms extends Component {
       children,
       validate,
       initialValues,
+      validateOnMount,
       validateOnChange,
       validateOnBlur,
-      validateOnMount,
       touchOnChange,
       touchOnBlur,
       shouldUnregister
@@ -440,9 +453,9 @@ class ReactForms extends Component {
         value={{
           ...formState,
           initialValues,
+          validateOnMount,
           validateOnChange,
           validateOnBlur,
-          validateOnMount,
           touchOnChange,
           touchOnBlur,
           shouldUnregister,
@@ -470,9 +483,9 @@ class AsyncValuesWrapper extends Component {
   initialized = this.getAsyncValuesReady();
 
   getAsyncValuesReady () {
-    const { asyncValuesReady, innerProps = {} } = this.props;
+    const { asyncValuesReady, outerProps } = this.props;
     if (isFunction(asyncValuesReady)) {
-      return asyncValuesReady(innerProps);
+      return asyncValuesReady(outerProps);
     } else {
       return asyncValuesReady;
     }
@@ -490,7 +503,7 @@ class AsyncValuesWrapper extends Component {
   };
 
   render () {
-    const { asyncValuesReady, innerProps, ...rest } = this.props;
+    const { asyncValuesReady, ...rest } = this.props;
 
     return <ReactForms key={this.getKey()} {...rest} />;
   }

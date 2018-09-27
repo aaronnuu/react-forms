@@ -47,11 +47,47 @@ In addition to these there are two different HOC's
 
 ### ReactForms
 
-This is the state container for the form, it is the place where all `<Field />` state is aggregated to be easily accessed. It doesn't do anything by itself besides give you the state of the form and access to the form helpers to manipulate that state.
+This is the state container for the form, it is the place where all `<Field />` state is organised and the submit functionality is implemented. This component gives you the state of the form and access to the form helpers to manipulate that state.
 
-#### Props
+### Props
 
-##### `initialValues: { [fieldName]: value }`
+#### `asyncValuesReady: boolean (true)`
+
+Sometimes you want to render a form before some asynchrounous data that will be used as the initial values of the form has been loaded. When this prop switches from false to true it resets the form and will render again with the new initial values that you have passed in. It is best to not allow users to be able to input into the form until after this process has been completed as everything that they have already entered will be lost.
+
+#### `initialValues: { [fieldName]: value }`
+
+The initial values that each field will be given
+
+#### `validateOnChange: boolean (true)`
+
+Whether or not to run validations when the field value changes
+
+#### `validateOnBlur: boolean (true)`
+
+Whether or not to run validations when the field is blurred
+
+#### `validateOnMount: boolean (false)`
+
+Whether or not to run validations when the field is mounted
+
+#### `touchOnChange: boolean (true)`
+
+Whether or not any field is considered to be touched when it's value changes
+
+#### `touchOnBlur: boolean (true)`
+
+Whether or not any field is considered touched when it is blurred
+
+#### `shouldUnregister: boolean (true)`
+
+Whether each field should unregister itself when it's name changes or it is unmounted. Individual fields' `shouldUnregister` property will take precendence over this.
+
+#### `handleSubmit: (values, actions) => Promise|void (noop)`
+
+The function that will run when the form is submitted or when the `submitForm` function is called, and all validations have passed. If this function returns a promise `isSubmitting` will be set to false after that promise has resolved or rejected, otherwise it will be set immediately after it has finished executing.
+
+#### `validate: (values) => Promise|Object`
 
 ### Form
 
@@ -65,7 +101,7 @@ Each `<Field />` is registered with it's closest form container on mount and by 
 
 In most cases you will want be unregistering `<Field />`'s as they are unmounted to not pollute the state with entries that are superfluous, however in certain situations it can be advantageous to keep the value around. For example, login forms with multiple stages, you will get a nominal performance improvement by actually unmounting the `<Field />` instead of just hiding it with `display: none`
 
-These entries will also have their validation methods run which could stop the form from submitting without showing anything to the user as the field the error should be attached to is now gone.
+These entries will also have their validation methods run which could stop the form from submitting without showing anything to the user as the field the error should be attached to is now gone. The best way around this is to make sure the validation passes before unmounting the field, or by having a dynamic validation method that changes what fields are validated based on what is visible.
 
 ####
 
@@ -130,6 +166,8 @@ class FormContainer extends Component {
 ## Props
 
 ## Caveats
+
+_In certain circumstances (where the individual field validation is synchronous and the outer form validation is asynchronous) then the resolved error will override the synchronous error, but only when the form is submitted._
 
 ## Authors
 
