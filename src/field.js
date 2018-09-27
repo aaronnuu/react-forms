@@ -50,7 +50,7 @@ class Field extends Component {
     };
 
     this.id = uuid();
-    this.isMounted = false;
+    this.mounted = false;
     this.shouldUnregister = !isNullOrUndefined(shouldUnregister)
       ? shouldUnregister
       : formShouldUnregister;
@@ -186,7 +186,7 @@ class Field extends Component {
 
   setFieldState (state) {
     return new Promise(resolve => {
-      if (this.isMounted) {
+      if (this.mounted) {
         this.setState(state, resolve);
       } else {
         resolve();
@@ -201,7 +201,7 @@ class Field extends Component {
       reactForms: { validateOnMount, registerField }
     } = this.props;
 
-    this.isMounted = true;
+    this.mounted = true;
 
     registerField(name, {
       id: this.id,
@@ -262,7 +262,7 @@ class Field extends Component {
       reactForms: { unregisterField }
     } = this.props;
 
-    this.isMounted = false;
+    this.mounted = false;
 
     if (this.shouldUnregister) {
       unregisterField(this.id);
