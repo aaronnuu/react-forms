@@ -4,7 +4,7 @@
 
 ## Features
 
-Field first form state management - minimal double handling of state updates within fields and the outer container.
+Field first form state management - no double handling of state updates within fields and the outer container.
 
 Deals with state management and tricky react form quirks only, leaves the view and layout up to you.
 
@@ -53,7 +53,7 @@ This is the state container for the form, it is the place where all `<Field />` 
 
 #### `asyncValuesReady: boolean (true)`
 
-Sometimes you want to render a form before some asynchrounous data that will be used as the initial values of the form has been loaded. When this prop switches from false to true it resets the form and will render again with the new initial values that you have passed in. It is best to not allow users to be able to input into the form until after this process has been completed as everything that they have already entered will be lost.
+Sometimes you want to render a form before some asynchrounous data that will be used as the initial values of the form has been loaded. When this prop switches from false to true it resets the form and will render again with the new initial values that you have passed in. It is best to not allow users to be able to input into the form until after this prop is true as everything that they have already entered will be lost.
 
 #### `initialValues: { [fieldName]: value }`
 
@@ -89,6 +89,8 @@ The function that will run when the form is submitted or when the `submitForm` f
 
 #### `validate: (values) => Promise|Object`
 
+The function that will be used to validate each field. Can either return a promise or an object
+
 ### Form
 
 This is a convenience component that attaches the form's `submitForm` method onto a `<form />`'s `onSubmit` handler.
@@ -101,7 +103,7 @@ Each `<Field />` is registered with it's closest form container on mount and by 
 
 In most cases you will want be unregistering `<Field />`'s as they are unmounted to not pollute the state with entries that are superfluous, however in certain situations it can be advantageous to keep the value around. For example, login forms with multiple stages, you will get a nominal performance improvement by actually unmounting the `<Field />` instead of just hiding it with `display: none`
 
-These entries will also have their validation methods run which could stop the form from submitting without showing anything to the user as the field the error should be attached to is now gone. The best way around this is to make sure the validation passes before unmounting the field, or by having a dynamic validation method that changes what fields are validated based on what is visible.
+These entries will also have their validation methods run which _could_ stop the form from submitting without showing anything to the user as the field the error should be attached to is now gone. The best way around this is to make sure the validation passes before unmounting the field, or by having a dynamic validation method that changes what fields are validated based on what is visible.
 
 ####
 
@@ -167,7 +169,7 @@ class FormContainer extends Component {
 
 ## Caveats
 
-_In certain circumstances (where the individual field validation is synchronous and the outer form validation is asynchronous) then the resolved error will override the synchronous error, but only when the form is submitted._
+When submitting the form both the field level validators and the form level validators will be run, with the form level errors only being applied if the field level error returns a falsey value
 
 ## Authors
 

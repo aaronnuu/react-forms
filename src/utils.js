@@ -1,3 +1,4 @@
+import get from 'lodash.get';
 import set from 'lodash.set';
 
 export function noop () {}
@@ -18,13 +19,24 @@ export function isNullOrUndefined (obj) {
   return obj === null || obj === undefined;
 }
 
+function recurseErrors (err, acc, keys) {
+  Object.entries(err).forEach(([key, value]) => {
+    if (isObject(value) || Array.isArray(value)) {
+      keys.push(key);
+      recurseErrors(value, acc, keys);
+    } else {
+      const mergedKey = [...keys, key].join('.');
+      if (!get(acc, mergedKey)) {
+        set(acc, mergedKey, value);
+      }
+    }
+  });
+}
+
 export function concatenateErrors (errors) {
   return errors.reduce((acc, err) => {
-    Object.keys(err).forEach(key => {
-      if (!acc[key]) {
-        set(acc, key, err[key]);
-      }
-    });
+    const keys = [];
+    recurseErrors(err, acc, keys);
     return acc;
   }, {});
 }

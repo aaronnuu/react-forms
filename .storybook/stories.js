@@ -50,7 +50,11 @@ class AsyncInitialValues extends Component {
         validateOnChange
         touchOnChange
         asyncValuesReady={!this.state.loading}
-        validate={() => ({ 'testing.nested.something': 'error boiii' })}
+        validate={() => ({
+          test: 'goodbye',
+          'testing.nested.one_more': 'one more error',
+          testing: { nested: { object: 'hello', something: 'error boiii' } }
+        })}
         handleSubmit={console.log}
       >
         {props => {
@@ -61,9 +65,6 @@ class AsyncInitialValues extends Component {
                   sendImmediate
                   name="test"
                   initialValue={this.state.initialValues.test}
-                  validate={value =>
-                    value === 'Something' ? 'First error' : 'Second error'
-                  }
                 />
                 <Field
                   name="testing.nested.object"
@@ -160,7 +161,14 @@ class WithFormTest extends Component {
 class FieldArrayTest extends Component {
   render() {
     return (
-      <ReactForms validateOnChange touchOnChange handleSubmit={console.log}>
+      <ReactForms
+        validateOnChange
+        touchOnChange
+        validate={() => ({
+          something: ['Error one', 'Error two', 'Error three']
+        })}
+        handleSubmit={console.log}
+      >
         {props => {
           return (
             <Fragment>
