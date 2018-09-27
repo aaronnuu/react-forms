@@ -50,6 +50,7 @@ class Field extends Component {
     };
 
     this.id = uuid();
+    this.isMounted = false;
     this.shouldUnregister = !isNullOrUndefined(shouldUnregister)
       ? shouldUnregister
       : formShouldUnregister;
@@ -185,7 +186,11 @@ class Field extends Component {
 
   setFieldState (state) {
     return new Promise(resolve => {
-      this.setState(state, resolve);
+      if (this.isMounted) {
+        this.setState(state, resolve);
+      } else {
+        resolve();
+      }
     });
   }
 
@@ -195,6 +200,8 @@ class Field extends Component {
       name,
       reactForms: { validateOnMount, registerField }
     } = this.props;
+
+    this.isMounted = true;
 
     registerField(name, {
       id: this.id,
@@ -252,11 +259,12 @@ class Field extends Component {
 
   componentWillUnmount () {
     const {
-      shouldUnregister,
       reactForms: { unregisterField }
     } = this.props;
 
-    if (shouldUnregister) {
+    this.isMounted = false;
+
+    if (this.shouldUnregister) {
       unregisterField(this.id);
     }
   }
@@ -329,8 +337,8 @@ class Field extends Component {
     if (isFunction(validate)) {
       const maybePromisedError = validate(value) || null;
 
-      // Either return a promise or don't return anything
-      // to ensure that we make as few updates as possible
+      // Either return a promise that resolves to the error
+      // or just the error so we can make as few updates as possible
       if (isPromise(maybePromisedError)) {
         return new Promise(async resolve => {
           await this.setFieldState(prevState => ({
