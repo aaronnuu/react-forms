@@ -19,30 +19,46 @@ export function isNullOrUndefined (obj) {
   return obj === null || obj === undefined;
 }
 
-function recurseErrors (err, acc, keys) {
-  Object.entries(err).forEach(([key, value]) => {
-    if (isObject(value) || Array.isArray(value)) {
-      keys.push(key);
-      recurseErrors(value, acc, keys);
-    } else {
-      const mergedKey = [...keys, key].join('.');
-      if (!get(acc, mergedKey)) {
-        set(acc, mergedKey, value);
-      }
-    }
-  });
-}
+// from https://github.com/hughsk/flat/blob/master/index.js
+export function flatten (target) {
+  const output = {};
 
-export function concatenateErrors (errors) {
-  return errors.reduce((acc, err) => {
-    const keys = [];
-    recurseErrors(err, acc, keys);
-    return acc;
-  }, {});
+  function step (obj, prev) {
+    Object.keys(obj).forEach(function (key) {
+      const value = obj[key];
+
+      const newKey = prev ? `${prev}.${key}` : key;
+
+      if (
+        (isObject(value) || Array.isArray(value)) &&
+        Object.keys(value).length
+      ) {
+        return step(value, newKey);
+      }
+
+      output[newKey] = value;
+    });
+  }
+
+  step(target);
+
+  return output;
 }
 
 export function flattenArray (arr) {
   return [].concat.apply([], arr);
+}
+
+export function concatenateErrors (errors) {
+  return errors.reduce((acc, err) => {
+    const flatError = flatten(err);
+    Object.keys(flatError).forEach(key => {
+      if (!get(acc, key)) {
+        set(acc, key, flatError[key]);
+      }
+    });
+    return acc;
+  }, {});
 }
 
 export function uuid (a) {

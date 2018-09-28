@@ -53,7 +53,10 @@ class AsyncInitialValues extends Component {
         validate={() => ({
           test: 'goodbye',
           'testing.nested.one_more': 'one more error',
-          testing: { nested: { object: 'hello', something: 'error boiii' } }
+          testing: {
+            another: { something: 'another' },
+            nested: { object: 'hello', something: 'error boiii' }
+          }
         })}
         handleSubmit={console.log}
       >
@@ -72,7 +75,7 @@ class AsyncInitialValues extends Component {
                 />
                 <Field
                   sendImmediate
-                  name="testing.another"
+                  name="testing.another.something"
                   initialValue={true}
                   Component={props => {
                     return (
