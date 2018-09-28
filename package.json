@@ -22,8 +22,7 @@
     "reinstall": "rimraf node_modules && yarn",
     "prebuild": "rimraf dist",
     "build": "rollup -c && size-limit",
-    "prepublish": "yarn build",
-    "precommit": "lint-staged",
+    "prepare": "yarn build",
     "storybook": "start-storybook -p 9001 -c .storybook"
   },
   "dependencies": {
@@ -78,6 +77,11 @@
     "rollup-plugin-uglify": "^4.0.0",
     "size-limit": "^0.18.5"
   },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
   "lint-staged": {
     "*.js": [
       "prettier-eslint --write --eslintPath=node_modules/eslint --prettierPath=node_modules/prettier",
@@ -87,15 +91,15 @@
   "size-limit": [
     {
       "path": "./dist/index.js",
-      "limit": "12 kB"
+      "limit": "13 kB"
     },
     {
       "path": "./dist/react-forms.esm.js",
-      "limit": "12 kB"
+      "limit": "13 kB"
     },
     {
       "path": "./dist/react-forms.umd.production.js",
-      "limit": "12 kB"
+      "limit": "13 kB"
     }
   ]
 }
