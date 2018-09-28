@@ -82,7 +82,7 @@ class Field extends Component {
             this.sendValue(value)
           ];
           if (shouldValidate) {
-            const error = this.handleValidate();
+            const error = this.handleValidate(value);
             if (isPromise(error)) {
               promises.push(this.sendError(await error));
             } else {
@@ -116,6 +116,7 @@ class Field extends Component {
       },
       setTouched: (touched, shouldValidate = validateOnBlur) => {
         return new Promise(async resolve => {
+          const { value } = this.state;
           const promises = [
             this.setFieldState(prevState => ({
               ...prevState,
@@ -124,7 +125,7 @@ class Field extends Component {
             this.sendTouched(touched)
           ];
           if (shouldValidate) {
-            const error = this.handleValidate();
+            const error = this.handleValidate(value);
             if (isPromise(error)) {
               promises.push(this.sendError(await error));
             } else {
@@ -156,7 +157,7 @@ class Field extends Component {
           ];
 
           if (shouldValidate) {
-            const validation = this.handleValidate();
+            const validation = this.handleValidate(value);
             if (isPromise(validation)) {
               error = await validation;
             } else {
@@ -212,7 +213,7 @@ class Field extends Component {
     });
 
     if (validateOnMount) {
-      const error = this.handleValidate();
+      const error = this.handleValidate(value);
       if (isPromise(error)) {
         this.sendError(await error);
       } else {
@@ -282,7 +283,7 @@ class Field extends Component {
         [name]: set(
           { ...prevState.fields[name] },
           'value',
-          value || this.state.value
+          !isNullOrUndefined(value) ? value : this.state.value
         )
       }
     }));
@@ -301,7 +302,7 @@ class Field extends Component {
         [name]: set(
           { ...prevState.fields[name] },
           'touched',
-          touched || this.state.touched
+          !isNullOrUndefined(touched) ? touched : this.state.touched
         )
       }
     }));
@@ -320,14 +321,13 @@ class Field extends Component {
         [name]: set(
           { ...prevState.fields[name] },
           'error',
-          error || this.state.error
+          !isNullOrUndefined(error) ? error : this.state.error
         )
       }
     }));
   }
 
-  handleValidate () {
-    const { value } = this.state;
+  handleValidate (value) {
     const {
       name,
       validate,
@@ -441,11 +441,11 @@ class Field extends Component {
 
     if (sendImmediate || !focused) {
       this.sendValue(value);
-      this.sendTouched(touched || !touchOnChange);
+      this.sendTouched(touched || !!touchOnChange);
     }
 
     if (validateOnChange) {
-      const error = this.handleValidate();
+      const error = this.handleValidate(value);
       if (isPromise(error)) {
         if (sendImmediate || !focused) {
           this.sendError(await error);
@@ -459,7 +459,7 @@ class Field extends Component {
   }
 
   async handleBlur (e) {
-    const { touched } = this.state;
+    const { value, touched } = this.state;
     const {
       onBlur,
       reactForms: { validateOnBlur, touchOnBlur }
@@ -481,7 +481,7 @@ class Field extends Component {
     this.sendTouched(touched || !!touchOnBlur);
 
     if (validateOnBlur) {
-      const error = this.handleValidate();
+      const error = this.handleValidate(value);
       if (isPromise(error)) {
         this.sendError(await error);
       } else {
@@ -494,7 +494,7 @@ class Field extends Component {
   }
 
   getFieldProps () {
-    const { value, error, touched, focused, isValidating } = this.state;
+    const { value, touched, error, focused, isValidating } = this.state;
     const { name } = this.props;
 
     return {

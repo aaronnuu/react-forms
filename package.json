@@ -22,7 +22,7 @@
     "reinstall": "rimraf node_modules && yarn",
     "prebuild": "rimraf dist",
     "build": "rollup -c && size-limit",
-    "prepare": "yarn build",
+    "prepublishOnly": "yarn build",
     "storybook": "start-storybook -p 9001 -c .storybook"
   },
   "dependencies": {
@@ -57,7 +57,7 @@
     "eslint-plugin-promise": "^3.8.0",
     "eslint-plugin-react": "^7.10.0",
     "eslint-plugin-standard": "^3.1.0",
-    "husky": "^0.14.3",
+    "husky": "^1.0.1",
     "jest": "^23.4.1",
     "jest-dom": "^1.8.1",
     "lint-staged": "^7.2.0",
