@@ -140,46 +140,44 @@ class Field extends Component {
       },
       reset: (val, shouldValidate = validateOnMount) => {
         return new Promise(async resolve => {
-          let error = null;
           const value = !isNullOrUndefined(val) ? val : initialValue;
           const touched = shouldValidate && validateOnMount;
+          const maybePromisedError =
+            (shouldValidate && this.handleValidate(value)) || null;
 
           const promises = [
             this.setFieldState(prevState => ({
               ...prevState,
               value,
-              touched,
-              error
+              touched
             })),
             this.sendValue(value),
-            this.sendTouched(touched),
-            this.sendError(error)
+            this.sendTouched(touched)
           ];
 
-          if (shouldValidate) {
-            const validation = this.handleValidate(value);
-            if (isPromise(validation)) {
-              error = await validation;
-            } else {
-              error = validation;
-            }
-          }
+          if (isPromise(maybePromisedError)) {
+            const error = await maybePromisedError;
 
-          promises.push(this.sendError(error));
-          promises.push(
-            this.setFieldState(prevState => ({
-              ...prevState,
+            promises.push(this.sendError(error));
+
+            await Promise.all(promises);
+
+            resolve({
+              value,
+              touched,
               error
-            }))
-          );
+            });
+          } else {
+            promises.push(this.sendError(maybePromisedError));
 
-          await Promise.all(promises);
+            await Promise.all(promises);
 
-          resolve({
-            value,
-            touched,
-            error
-          });
+            resolve({
+              value,
+              touched,
+              error: maybePromisedError
+            });
+          }
         });
       }
     };
@@ -213,11 +211,11 @@ class Field extends Component {
     });
 
     if (validateOnMount) {
-      const error = this.handleValidate(value);
-      if (isPromise(error)) {
-        this.sendError(await error);
+      const maybePromisedError = this.handleValidate(value);
+      if (isPromise(maybePromisedError)) {
+        this.sendError(await maybePromisedError);
       } else {
-        this.sendError(error);
+        this.sendError(maybePromisedError);
       }
     }
   }
@@ -280,11 +278,7 @@ class Field extends Component {
       ...prevState,
       fields: {
         ...prevState.fields,
-        [name]: set(
-          { ...prevState.fields[name] },
-          'value',
-          !isNullOrUndefined(value) ? value : this.state.value
-        )
+        [name]: set({ ...prevState.fields[name] }, 'value', value)
       }
     }));
   }
@@ -299,11 +293,7 @@ class Field extends Component {
       ...prevState,
       fields: {
         ...prevState.fields,
-        [name]: set(
-          { ...prevState.fields[name] },
-          'touched',
-          !isNullOrUndefined(touched) ? touched : this.state.touched
-        )
+        [name]: set({ ...prevState.fields[name] }, 'touched', touched)
       }
     }));
   }
@@ -318,11 +308,7 @@ class Field extends Component {
       ...prevState,
       fields: {
         ...prevState.fields,
-        [name]: set(
-          { ...prevState.fields[name] },
-          'error',
-          !isNullOrUndefined(error) ? error : this.state.error
-        )
+        [name]: set({ ...prevState.fields[name] }, 'error', error)
       }
     }));
   }
@@ -445,21 +431,21 @@ class Field extends Component {
     }
 
     if (validateOnChange) {
-      const error = this.handleValidate(value);
-      if (isPromise(error)) {
+      const maybePromisedError = this.handleValidate(value);
+      if (isPromise(maybePromisedError)) {
         if (sendImmediate || !focused) {
-          this.sendError(await error);
+          this.sendError(await maybePromisedError);
         }
       } else {
         if (sendImmediate || !focused) {
-          this.sendError(error);
+          this.sendError(maybePromisedError);
         }
       }
     }
   }
 
   async handleBlur (e) {
-    const { value, touched } = this.state;
+    const { value, touched, error } = this.state;
     const {
       onBlur,
       reactForms: { validateOnBlur, touchOnBlur }
@@ -477,20 +463,19 @@ class Field extends Component {
       focused: false
     }));
 
-    this.sendValue();
+    this.sendValue(value);
     this.sendTouched(touched || !!touchOnBlur);
 
     if (validateOnBlur) {
-      const error = this.handleValidate(value);
-      if (isPromise(error)) {
-        this.sendError(await error);
+      const maybePromisedError = this.handleValidate(value);
+      if (isPromise(maybePromisedError)) {
+        this.sendError(await maybePromisedError);
       } else {
-        this.sendError(error);
+        this.sendError(maybePromisedError);
       }
-      return;
+    } else {
+      this.sendError(error);
     }
-
-    this.sendError();
   }
 
   getFieldProps () {
