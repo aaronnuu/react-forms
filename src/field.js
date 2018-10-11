@@ -78,6 +78,23 @@ class Field extends Component {
     this.getFieldProps = this.getFieldProps.bind(this);
   }
 
+  shouldComponentUpdate (nextProps, nextState) {
+    const { name, children, render } = this.props;
+    const {
+      name: newName,
+      children: newChildren,
+      render: newRender
+    } = nextProps;
+
+    if (this.state !== nextState) {
+      return true;
+    }
+    if (name !== newName || children !== newChildren || render !== newRender) {
+      return true;
+    }
+    return false;
+  }
+
   getRegistrations (initialValue) {
     const {
       validate,
