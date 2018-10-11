@@ -27,7 +27,7 @@ class ReactForms extends Component {
 
   state = {
     fields: {},
-    status: null,
+    meta: null,
     submitCount: 0,
     isSubmitting: false,
     isValidating: false
@@ -46,7 +46,7 @@ class ReactForms extends Component {
     this.setFieldError = this.setFieldError.bind(this);
     this.setTouched = this.setTouched.bind(this);
     this.setFieldTouched = this.setFieldTouched.bind(this);
-    this.setStatus = this.setStatus.bind(this);
+    this.setMeta = this.setMeta.bind(this);
     this.resetForm = this.resetForm.bind(this);
     this.getValues = this.getValues.bind(this);
     this.getTouched = this.getTouched.bind(this);
@@ -194,12 +194,12 @@ class ReactForms extends Component {
     }
   }
 
-  setStatus (status) {
+  setMeta (meta) {
     return new Promise(resolve => {
       this.setState(
         prevState => ({
           ...prevState,
-          status
+          meta
         }),
         resolve
       );
@@ -404,23 +404,26 @@ class ReactForms extends Component {
   }
 
   getFormHelpers (withProps) {
+    const { meta, submitCount } = this.state;
     const { outerProps } = this.props;
     return {
       ...(outerProps && withProps ? { props: outerProps } : {}),
+      meta,
+      submitCount,
       setValues: this.setValues,
       setFieldValue: this.setFieldValue,
       setErrors: this.setErrors,
       setFieldError: this.setFieldError,
       setTouched: this.setTouched,
       setFieldTouched: this.setFieldTouched,
-      setStatus: this.setStatus,
+      setMeta: this.setMeta,
       resetForm: this.resetForm,
       submitForm: this.submitForm
     };
   }
 
   getFormState () {
-    const { fields, ...restState } = this.state;
+    const { fields, meta, submitCount, ...restState } = this.state;
 
     return {
       ...this.getComputedProps(),
