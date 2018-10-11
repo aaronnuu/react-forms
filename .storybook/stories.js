@@ -128,7 +128,6 @@ class WithFormTest extends Component {
             name="name"
             initialValue="boris"
             render={props => {
-              console.log(props);
               return (
                 <div>
                   <input {...props.field} />
@@ -186,11 +185,37 @@ class FieldArrayTest extends Component {
             <Fragment>
               <Form>
                 <FieldArray
-                  name="something"
-                  initialFields={[
-                    { initialValue: 'one', validate: () => 'Error' },
-                    { initialValue: 'two' }
-                  ]}
+                  name="something-something"
+                  Component={({ field }) => {
+                    return (
+                      <Fragment>
+                        <input
+                          {...field}
+                          value={field.value.one}
+                          onChange={e =>
+                            field.onChange({
+                              target: {
+                                type: 'text',
+                                value: { ...field.value, one: e.target.value }
+                              }
+                            })
+                          }
+                        />
+                        <input
+                          {...field}
+                          value={field.value.two}
+                          onChange={e =>
+                            field.onChange({
+                              target: {
+                                type: 'text',
+                                value: { ...field.value, two: e.target.value }
+                              }
+                            })
+                          }
+                        />
+                      </Fragment>
+                    );
+                  }}
                 >
                   {({
                     fields,

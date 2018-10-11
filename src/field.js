@@ -30,7 +30,8 @@ class Field extends Component {
       reactForms: {
         initialValues,
         validateOnMount,
-        shouldUnregister: formShouldUnregister
+        shouldUnregister: formShouldUnregister,
+        registerField
       }
     } = props;
 
@@ -38,14 +39,18 @@ class Field extends Component {
 
     const formInitialValue = get(initialValues, name);
 
+    const value = !isNullOrUndefined(initialValue)
+      ? initialValue
+      : !isNullOrUndefined(formInitialValue)
+        ? formInitialValue
+        : '';
+    const touched = validateOnMount;
+    const error = null;
+
     this.state = {
-      value: !isNullOrUndefined(initialValue)
-        ? initialValue
-        : !isNullOrUndefined(formInitialValue)
-          ? formInitialValue
-          : '',
-      touched: validateOnMount,
-      error: null,
+      value,
+      touched,
+      error,
       focused: false,
       isValidating: false
     };
@@ -55,6 +60,14 @@ class Field extends Component {
     this.shouldUnregister = !isNullOrUndefined(shouldUnregister)
       ? shouldUnregister
       : formShouldUnregister;
+
+    registerField(name, {
+      id: this.id,
+      initialValue: value,
+      initialTouched: touched,
+      initialError: error,
+      ...this.getRegistrations(value)
+    });
 
     this.setFieldState = this.setFieldState.bind(this);
     this.getRegistrations = this.getRegistrations.bind(this);
@@ -195,21 +208,12 @@ class Field extends Component {
   }
 
   async componentDidMount () {
-    const { value, touched, error } = this.state;
+    const { value } = this.state;
     const {
-      name,
-      reactForms: { validateOnMount, registerField }
+      reactForms: { validateOnMount }
     } = this.props;
 
     this.mounted = true;
-
-    registerField(name, {
-      id: this.id,
-      initialValue: value,
-      initialTouched: touched,
-      initialError: error,
-      ...this.getRegistrations(value)
-    });
 
     if (validateOnMount) {
       const maybePromisedError = this.handleValidate(value);
