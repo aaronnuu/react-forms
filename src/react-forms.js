@@ -270,7 +270,7 @@ class ReactForms extends Component {
     }));
 
     const asyncValidators = [];
-    const syncValidators = [];
+    const syncErrors = [];
 
     // Validate all fields then the form
     // If both have validated the same field use
@@ -287,12 +287,12 @@ class ReactForms extends Component {
         if (isPromise(maybePromisedError)) {
           asyncValidators.push({ [name]: maybePromisedError });
         } else {
-          syncValidators.push({ [name]: maybePromisedError });
+          syncErrors.push({ [name]: maybePromisedError });
         }
       } else {
         // Make sure every error has a null value if
         // no validation is performed
-        syncValidators.push({ [name]: null });
+        syncErrors.push({ [name]: null });
       }
     });
 
@@ -302,12 +302,12 @@ class ReactForms extends Component {
       if (isPromise(maybePromisedErrors)) {
         asyncValidators.push(maybePromisedErrors);
       } else {
-        syncValidators.push(maybePromisedErrors);
+        syncErrors.push(maybePromisedErrors);
       }
     }
 
     if (asyncValidators.length === 0) {
-      return concatenateErrors(syncValidators);
+      return concatenateErrors(syncErrors);
     } else {
       // Wrap this in a promise to be able to control the
       // resolved value so we can preserve the field name
@@ -330,8 +330,7 @@ class ReactForms extends Component {
           )
         );
         resolve({
-          ...concatenateErrors(syncValidators),
-          ...concatenateErrors(asyncErrors)
+          ...concatenateErrors([...syncErrors, ...asyncErrors])
         });
       });
     }
@@ -446,6 +445,7 @@ class ReactForms extends Component {
       touchOnBlur,
       shouldUnregister
     } = this.props;
+
     const formState = this.getFormState();
 
     return (

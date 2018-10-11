@@ -54,11 +54,23 @@ export function concatenateErrors (errors) {
     const flatError = flatten(err);
     Object.keys(flatError).forEach(key => {
       if (!get(acc, key)) {
-        set(acc, key, flatError[key]);
+        // All falsey values are considered to be non-errors
+        set(acc, key, flatError[key] || null);
       }
     });
     return acc;
   }, {});
+}
+
+export function reduceError (errors, name) {
+  return (
+    errors.reduce((acc, err) => {
+      if (!acc) {
+        acc = isObject(err) ? get(err, name, null) : err;
+      }
+      return acc;
+    }, null) || null // All falsey values are considered to be non-errors
+  );
 }
 
 export function uuid (a) {

@@ -8,7 +8,8 @@ import {
   isFunction,
   isObject,
   isNullOrUndefined,
-  uuid
+  uuid,
+  reduceError
 } from './utils';
 
 @withContext
@@ -320,65 +321,61 @@ class Field extends Component {
       reactForms: { validateForm }
     } = this.props;
 
+    // Run both field level and form level validations
+    // to make sure that all possible errors are accounted for
+    // Always use the first error found
+    const asyncValidators = [];
+    const syncErrors = [];
+
     if (isFunction(validate)) {
       const maybePromisedError = validate(value) || null;
-
-      // Either return a promise that resolves to the error
-      // or just the error so we can make as few updates as possible
       if (isPromise(maybePromisedError)) {
-        return new Promise(async resolve => {
-          await this.setFieldState(prevState => ({
-            ...prevState,
-            isValidating: true
-          }));
-
-          const error = (await maybePromisedError) || null;
-
-          await this.setFieldState(prevState => ({
-            ...prevState,
-            error: error,
-            isValidating: false
-          }));
-
-          resolve(error);
-        });
+        asyncValidators.push(maybePromisedError);
       } else {
-        this.setFieldState(prevState => ({
-          ...prevState,
-          error: maybePromisedError
-        }));
-        return maybePromisedError;
+        syncErrors.push(maybePromisedError);
       }
-    } else if (isFunction(validateForm)) {
+    }
+
+    if (isFunction(validateForm)) {
       const values = set({}, name, value);
       const maybePromisedErrors = validateForm(values);
 
       if (isPromise(maybePromisedErrors)) {
-        return new Promise(async resolve => {
-          await this.setFieldState(prevState => ({
-            ...prevState,
-            isValidating: true
-          }));
-
-          const errors = await maybePromisedErrors;
-
-          await this.setFieldState(prevState => ({
-            ...prevState,
-            error: get(errors, name, null),
-            isValidating: false
-          }));
-
-          resolve(get(errors, name, null));
-        });
+        asyncValidators.push(maybePromisedErrors);
       } else {
         const error = get(maybePromisedErrors, name, null);
-        this.setFieldState(prevState => ({
-          ...prevState,
-          error
-        }));
-        return error;
+        syncErrors.push(error);
       }
     }
+
+    // Either return a promise that resolves to the error
+    // or just the error so we can make as few updates as possible
+    if (syncErrors.length !== 0) {
+      const error = reduceError(syncErrors, name);
+      this.setFieldState(prevState => ({
+        ...prevState,
+        error
+      }));
+      return error;
+    } else if (asyncValidators.length !== 0) {
+      return new Promise(async resolve => {
+        await this.setFieldState(prevState => ({
+          ...prevState,
+          isValidating: true
+        }));
+
+        const error = reduceError(await Promise.all(asyncValidators), name);
+        await this.setFieldState(prevState => ({
+          ...prevState,
+          error,
+          isValidating: false
+        }));
+
+        resolve(error);
+      });
+    }
+
+    return null;
   }
 
   handleFocus (e) {

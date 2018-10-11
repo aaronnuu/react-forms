@@ -109,7 +109,11 @@ class AsyncInitialValues extends Component {
   validate: () =>
     new Promise(resolve =>
       setTimeout(() => {
-        resolve({ test: 'Error', 'testing.nested.object': 'Error two' });
+        resolve({
+          test: 'Error',
+          'testing.nested.object': 'Error two',
+          name: 'Error three'
+        });
       }, 2000)
     )
 })
@@ -118,17 +122,22 @@ class WithFormTest extends Component {
     return (
       <div>
         <Form>
-          <Field
-            name="test"
-            sendImmediate
-            validate={() =>
-              new Promise(resolve => {
-                setTimeout(() => resolve('Hello'), 1000);
-              })
-            }
-          />
+          <Field name="test" sendImmediate validate={() => 'Hello'} />
           <Field name="testing.nested.object" initialValue="Hello" />
-          <Field name="name" initialValue="boris" />
+          <Field
+            name="name"
+            initialValue="boris"
+            render={props => {
+              console.log(props);
+              return (
+                <div>
+                  <input {...props.field} />
+                  {props.meta.isValidating ? 'Validating!' : null}
+                  {props.meta.error ? `Field error ${props.meta.error}!` : null}
+                </div>
+              );
+            }}
+          />
           <button type="button" onClick={this.props.test.submitForm}>
             Submit
           </button>
