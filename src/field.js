@@ -79,17 +79,23 @@ class Field extends Component {
   }
 
   shouldComponentUpdate (nextProps, nextState) {
-    const { name, children, render } = this.props;
+    const { name, children, render, Component } = this.props;
     const {
       name: newName,
       children: newChildren,
-      render: newRender
+      render: newRender,
+      Component: NewComponent
     } = nextProps;
 
     if (this.state !== nextState) {
       return true;
     }
-    if (name !== newName || children !== newChildren || render !== newRender) {
+    if (
+      name !== newName ||
+      children !== newChildren ||
+      render !== newRender ||
+      Component !== NewComponent
+    ) {
       return true;
     }
     return false;
