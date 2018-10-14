@@ -1,6 +1,6 @@
 {
   "name": "@aaronuu/react-forms",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Form state helper for react",
   "main": "dist/index.js",
   "module": "dist/react-forms.esm.js",
