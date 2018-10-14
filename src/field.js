@@ -118,7 +118,7 @@ class Field extends Component {
       name !== newName ||
       children !== newChildren ||
       render !== newRender ||
-      Component !== NewInputComponent
+      InputComponent !== NewInputComponent
     ) {
       return true;
     }
@@ -471,6 +471,8 @@ class Field extends Component {
 
     onChange(e);
 
+    this.type = type;
+
     this.setFieldState(prevState => ({
       ...prevState,
       value,
@@ -530,6 +532,17 @@ class Field extends Component {
     }
   }
 
+  createFakeEvent (value, type) {
+    const { name } = this.props;
+    return {
+      target: {
+        name,
+        value,
+        type: type || this.type
+      }
+    };
+  }
+
   getFieldProps () {
     const { value, touched, error, focused, isValidating } = this.state;
     const { name } = this.props;
@@ -541,7 +554,8 @@ class Field extends Component {
         error,
         touched,
         focused,
-        isValidating
+        isValidating,
+        createFakeEvent: this.createFakeEvent
       },
       onFocus: this.handleFocus,
       onChange: this.handleChange,

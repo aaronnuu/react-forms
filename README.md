@@ -95,17 +95,21 @@ The function that will be used to validate each field. Can either return a promi
 
 This is a convenience component that attaches the form's `submitForm` method onto a `<form />`'s `onSubmit` handler.
 
+### Props
+
+Anything that a HTML5 `<form />` takes;
+
 ### Field
 
 This is where most of the work happens, all `<Field />` components are self contained state managers in their own right and will only pass their state up to the parent `onBlur` (or `onChange` if the `sendImmediate` prop is set to true). These `<Field />`'s should be considered to be the source of truth for their own slice of the form state.
 
 Each `<Field />` is registered with it's closest form container on mount and by default is unregistered when unmounting (changed by the `shouldUnregister` prop). This registration sends the form container the initial state of the `<Field />` as well as it's individual state manipulation and validation methods, while the unregistration deletes the field entry in the parent container's state.
 
-In most cases you will want be unregistering `<Field />`'s as they are unmounted to not pollute the state with entries that are superfluous, however in certain situations it can be advantageous to keep the value around. For example, login forms with multiple stages, you will get a nominal performance improvement by actually unmounting the `<Field />` instead of just hiding it with `display: none`
+In most cases you will want be unregistering `<Field />`'s as they are unmounted to not pollute the state with entries that are superfluous, however in certain situations it can be advantageous to keep the value around. For example, login forms with multiple stages, you will get a nominal performance improvement by actually unmounting the `<Field />` instead of just hiding it.
 
 These entries will also have their validation methods run which _could_ stop the form from submitting without showing anything to the user as the field the error should be attached to is now gone. The best way around this is to make sure the validation passes before unmounting the field, or by having a dynamic validation method that changes what fields are validated based on what is visible.
 
-####
+### Props
 
 ## Example
 
