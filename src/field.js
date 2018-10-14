@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import isEqual from 'react-fast-compare';
 import get from 'lodash.get';
 import set from 'lodash.set';
 import withContext from './containers/with-context';
@@ -79,12 +80,35 @@ class Field extends Component {
   }
 
   shouldComponentUpdate (nextProps, nextState) {
-    const { name, children, render, Component } = this.props;
+    const {
+      name,
+      children,
+      render,
+      Component: InputComponent,
+      initialValue,
+      reactForms,
+      sendImmediate,
+      shouldUnregister,
+      validate,
+      onFocus,
+      onChange,
+      onBlur,
+      ...rest
+    } = this.props;
     const {
       name: newName,
       children: newChildren,
       render: newRender,
-      Component: NewComponent
+      Component: NewInputComponent,
+      initialValue: newInitialValue,
+      reactForms: newReactForms,
+      sendImmediate: newSendImmediate,
+      shouldUnregister: newShouldUnregister,
+      validate: newValidate,
+      onFocus: newOnFocus,
+      onChange: newOnChange,
+      onBlur: newOnBlur,
+      ...newRest
     } = nextProps;
 
     if (this.state !== nextState) {
@@ -94,10 +118,14 @@ class Field extends Component {
       name !== newName ||
       children !== newChildren ||
       render !== newRender ||
-      Component !== NewComponent
+      Component !== NewInputComponent
     ) {
       return true;
     }
+    if (!isEqual(rest, newRest)) {
+      return true;
+    }
+
     return false;
   }
 

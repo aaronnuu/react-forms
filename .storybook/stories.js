@@ -19,6 +19,15 @@ storiesOf('React Forms', module)
   .add('With form test', () => <WithFormTest />)
   .add('RepeaterField test', () => <FieldArrayTest />);
 
+const CustomInput = props => {
+  return (
+    <Fragment>
+      <input {...props.field} checked={!!props.field.value} type="checkbox" />
+      <p>{JSON.stringify(props, null, 2)}</p>
+    </Fragment>
+  );
+};
+
 class AsyncInitialValues extends Component {
   state = {
     loading: true,
@@ -29,7 +38,8 @@ class AsyncInitialValues extends Component {
           object: ''
         }
       }
-    }
+    },
+    isDisabled: false
   };
 
   componentDidMount() {
@@ -55,7 +65,10 @@ class AsyncInitialValues extends Component {
           'testing.nested.one_more': 'one more error',
           testing: {
             another: { something: 'another' },
-            nested: { object: 'hello', something: 'error boiii' }
+            nested: {
+              object: 'hello',
+              something: "Some really long error that just doesn't seem to end."
+            }
           }
         })}
         handleSubmit={console.log}
@@ -77,18 +90,19 @@ class AsyncInitialValues extends Component {
                   sendImmediate
                   name="testing.another.something"
                   initialValue={true}
-                  Component={props => {
-                    return (
-                      <input
-                        {...props.field}
-                        checked={!!props.field.value}
-                        type="checkbox"
-                      />
-                    );
-                  }}
+                  isDisabled={this.state.isDisabled}
+                  Component={CustomInput}
                 />
                 <Field name="testing.nested.something" />
                 <Field name="testing.nested.one_more" />
+                <button
+                  type="button"
+                  onClick={() => {
+                    this.setState({ isDisabled: !this.state.isDisabled });
+                  }}
+                >
+                  Toggle disable
+                </button>
                 <button type="button" onClick={() => props.submitForm()}>
                   Submit
                 </button>

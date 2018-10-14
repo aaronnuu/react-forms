@@ -31,7 +31,7 @@
     "lodash.get": "^4.4.2",
     "lodash.set": "^4.3.2",
     "lodash.unset": "^4.5.2",
-    "react-fast-compare": "^2.0.1"
+    "react-fast-compare": "^2.0.2"
   },
   "peerDependencies": {
     "react": "^15.0.0 || ^16.0.0"
