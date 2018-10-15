@@ -403,15 +403,16 @@ class Field extends Component {
       }
     }
 
+    const reducedSyncError = reduceError(syncErrors, name);
+
     // Either return a promise that resolves to the error
     // or just the error so we can make as few updates as possible
-    if (syncErrors.length !== 0) {
-      const error = reduceError(syncErrors, name);
+    if (reducedSyncError) {
       this.setFieldState(prevState => ({
         ...prevState,
-        error
+        error: reducedSyncError
       }));
-      return error;
+      return reducedSyncError;
     } else if (asyncValidators.length !== 0) {
       return new Promise(async resolve => {
         await this.setFieldState(prevState => ({

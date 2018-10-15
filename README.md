@@ -59,6 +59,10 @@ Sometimes you want to render a form before some asynchrounous data that will be 
 
 The initial values that each field will be given
 
+#### `validateOnMount: boolean (false)`
+
+Whether or not to run validations when the field is mounted
+
 #### `validateOnChange: boolean (true)`
 
 Whether or not to run validations when the field value changes
@@ -66,10 +70,6 @@ Whether or not to run validations when the field value changes
 #### `validateOnBlur: boolean (true)`
 
 Whether or not to run validations when the field is blurred
-
-#### `validateOnMount: boolean (false)`
-
-Whether or not to run validations when the field is mounted
 
 #### `touchOnChange: boolean (true)`
 
@@ -97,7 +97,7 @@ This is a convenience component that attaches the form's `submitForm` method ont
 
 ### Props
 
-Anything that a HTML5 `<form />` takes;
+Anything that a HTML5 `<form />` takes
 
 ### Field
 
