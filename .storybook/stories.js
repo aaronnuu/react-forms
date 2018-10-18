@@ -120,23 +120,14 @@ class AsyncInitialValues extends Component {
   name: 'test',
   validateOnChange: true,
   validateOnBlur: false,
-  validate: () =>
-    new Promise(resolve =>
-      setTimeout(() => {
-        resolve({
-          test: 'Error',
-          'testing.nested.object': 'Error two',
-          name: 'Error three'
-        });
-      }, 2000)
-    )
+  handleSubmit: () => 'hello'
 })
 class WithFormTest extends Component {
   render() {
     return (
       <div>
         <Form>
-          <Field name="test" sendImmediate validate={() => 'Hello'} />
+          <Field name="test" sendImmediate />
           <Field name="testing.nested.object" initialValue="Hello" />
           <Field
             name="name"
@@ -154,8 +145,8 @@ class WithFormTest extends Component {
           <button
             type="button"
             onClick={() => {
-              this.props.test.submitForm().then(() => {
-                console.log('finished submit');
+              this.props.test.submitForm().then(res => {
+                console.log(res, 'finished submit');
               });
             }}
           >

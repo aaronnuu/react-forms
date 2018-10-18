@@ -347,33 +347,25 @@ class ReactForms extends Component {
   async executeSubmit () {
     const { handleSubmit } = this.props;
 
-    const values = this.getValues();
-    const errors = this.getErrors();
+    try {
+      const values = this.getValues();
+      const errors = this.getErrors();
 
-    const isValid = Object.keys(errors).length <= 0;
+      const isValid = Object.keys(errors).length <= 0;
 
-    if (isValid) {
-      const submit = handleSubmit(values, this.getFormHelpers(true));
-      if (isPromise(submit)) {
-        try {
+      if (isValid) {
+        const submit = handleSubmit(values, this.getFormHelpers(true));
+        if (isPromise(submit)) {
           await submit;
-          await this.setFormState(prevState => ({
-            ...prevState,
-            isSubmitting: false
-          }));
-        } catch (e) {
-          await this.setFormState(prevState => ({
-            ...prevState,
-            isSubmitting: false
-          }));
         }
         return submit;
       }
+    } finally {
+      await this.setFormState(prevState => ({
+        ...prevState,
+        isSubmitting: false
+      }));
     }
-    await this.setFormState(prevState => ({
-      ...prevState,
-      isSubmitting: false
-    }));
   }
 
   async submitForm (e) {
