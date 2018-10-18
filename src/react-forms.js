@@ -356,10 +356,14 @@ class ReactForms extends Component {
       if (isValid) {
         const submit = handleSubmit(values, this.getFormHelpers(true));
         if (isPromise(submit)) {
-          await submit;
+          const submission = await submit;
+          return submission;
         }
         return submit;
       }
+
+      // False if form didn't submit
+      return false;
     } finally {
       await this.setFormState(prevState => ({
         ...prevState,
@@ -389,6 +393,9 @@ class ReactForms extends Component {
         return this.executeSubmit();
       }
     }
+
+    // False if form didn't submit
+    return false;
   }
 
   getComputedProps () {
