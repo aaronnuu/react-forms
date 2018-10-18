@@ -367,7 +367,7 @@ class ReactForms extends Component {
             isSubmitting: false
           }));
         }
-        return;
+        return submit;
       }
     }
     await this.setFormState(prevState => ({
@@ -391,10 +391,10 @@ class ReactForms extends Component {
       if (isPromise(maybePromisedErrors)) {
         const errors = await maybePromisedErrors;
         await this.setErrors(errors, false, true);
-        await this.executeSubmit();
+        return this.executeSubmit();
       } else {
         await this.setErrors(maybePromisedErrors, false, true);
-        await this.executeSubmit();
+        return this.executeSubmit();
       }
     }
   }
