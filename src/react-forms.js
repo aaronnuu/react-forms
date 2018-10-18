@@ -73,7 +73,7 @@ class ReactForms extends Component {
       reset
     }
   ) {
-    this.setState(prevState => {
+    this.setFormState(prevState => {
       this.initialValues = set({ ...this.initialValues }, name, initialValue);
       return {
         ...prevState,
@@ -96,7 +96,7 @@ class ReactForms extends Component {
   }
 
   unregisterField (id) {
-    this.setState(prevState => {
+    this.setFormState(prevState => {
       const { fields } = prevState;
 
       const newFields = { ...fields };
@@ -196,7 +196,7 @@ class ReactForms extends Component {
 
   setMeta (meta) {
     return new Promise(resolve => {
-      this.setState(
+      this.setFormState(
         prevState => ({
           ...prevState,
           meta
@@ -244,7 +244,7 @@ class ReactForms extends Component {
   startSubmit () {
     const { fields } = this.state;
 
-    this.setState(prevState => ({
+    this.setFormState(prevState => ({
       ...prevState,
       submitCount: prevState.submitCount + 1,
       isSubmitting: true
@@ -264,7 +264,7 @@ class ReactForms extends Component {
 
     const values = this.getValues();
 
-    this.setState(prevState => ({
+    this.setFormState(prevState => ({
       ...prevState,
       isValidating: true
     }));
@@ -307,6 +307,10 @@ class ReactForms extends Component {
     }
 
     if (asyncValidators.length === 0) {
+      this.setFormState(prevState => ({
+        ...prevState,
+        isValidating: false
+      }));
       return concatenateErrors(syncErrors);
     } else {
       // Wrap this in a promise to be able to control the
@@ -329,6 +333,10 @@ class ReactForms extends Component {
             })
           )
         );
+        this.setFormState(prevState => ({
+          ...prevState,
+          isValidating: false
+        }));
         resolve({
           ...concatenateErrors([...syncErrors, ...asyncErrors])
         });
@@ -336,7 +344,7 @@ class ReactForms extends Component {
     }
   }
 
-  executeSubmit () {
+  async executeSubmit () {
     const { handleSubmit } = this.props;
 
     const values = this.getValues();
@@ -347,29 +355,28 @@ class ReactForms extends Component {
     if (isValid) {
       const submit = handleSubmit(values, this.getFormHelpers(true));
       if (isPromise(submit)) {
-        submit
-          .then(() => {
-            this.setState(prevState => ({
-              ...prevState,
-              isSubmitting: false
-            }));
-          })
-          .catch(() => {
-            this.setState(prevState => ({
-              ...prevState,
-              isSubmitting: false
-            }));
-          });
+        try {
+          await submit;
+          await this.setFormState(prevState => ({
+            ...prevState,
+            isSubmitting: false
+          }));
+        } catch (e) {
+          await this.setFormState(prevState => ({
+            ...prevState,
+            isSubmitting: false
+          }));
+        }
         return;
       }
     }
-    this.setState(prevState => ({
+    await this.setFormState(prevState => ({
       ...prevState,
       isSubmitting: false
     }));
   }
 
-  submitForm (e) {
+  async submitForm (e) {
     const { isSubmitting } = this.state;
 
     if (e && e.preventDefault) {
@@ -382,13 +389,12 @@ class ReactForms extends Component {
       const maybePromisedErrors = this.runValidations();
 
       if (isPromise(maybePromisedErrors)) {
-        maybePromisedErrors.then(errors => {
-          this.setErrors(errors, false, true).then(this.executeSubmit);
-        });
+        const errors = await maybePromisedErrors;
+        await this.setErrors(errors, false, true);
+        await this.executeSubmit();
       } else {
-        this.setErrors(maybePromisedErrors, false, true).then(
-          this.executeSubmit
-        );
+        await this.setErrors(maybePromisedErrors, false, true);
+        await this.executeSubmit();
       }
     }
   }

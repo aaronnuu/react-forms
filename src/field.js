@@ -431,6 +431,11 @@ class Field extends Component {
       });
     }
 
+    // If no validation then set error to null
+    this.setState(prevState => ({
+      ...prevState,
+      error: null
+    }));
     return null;
   }
 

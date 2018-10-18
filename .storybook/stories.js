@@ -151,7 +151,14 @@ class WithFormTest extends Component {
               );
             }}
           />
-          <button type="button" onClick={this.props.test.submitForm}>
+          <button
+            type="button"
+            onClick={() => {
+              this.props.test.submitForm().then(() => {
+                console.log('finished submit');
+              });
+            }}
+          >
             Submit
           </button>
         </Form>
