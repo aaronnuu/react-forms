@@ -282,7 +282,10 @@ class ReactForms extends Component {
       const fieldValidator = fields[name].validate;
 
       if (isFunction(fieldValidator)) {
-        const maybePromisedError = fieldValidator(fields[name].value);
+        const maybePromisedError = fieldValidator(
+          fields[name].value,
+          this.getFormHelpers(true)
+        );
 
         if (isPromise(maybePromisedError)) {
           asyncValidators.push({ [name]: maybePromisedError });
@@ -297,7 +300,7 @@ class ReactForms extends Component {
     });
 
     if (isFunction(validate)) {
-      const maybePromisedErrors = validate(values);
+      const maybePromisedErrors = validate(values, this.getFormHelpers(true));
 
       if (isPromise(maybePromisedErrors)) {
         asyncValidators.push(maybePromisedErrors);
@@ -470,7 +473,8 @@ class ReactForms extends Component {
           registerField: this.registerField,
           unregisterField: this.unregisterField,
           validateForm: validate,
-          setFormState: this.setFormState
+          setFormState: this.setFormState,
+          getFormHelpers: this.getFormHelpers
         }}
       >
         {isFunction(children)

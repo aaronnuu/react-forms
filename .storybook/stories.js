@@ -187,9 +187,10 @@ class FieldArrayTest extends Component {
       <ReactForms
         validateOnChange
         touchOnChange
-        validate={() => ({
-          something: ['Error one', 'Error two', 'Error three']
-        })}
+        validate={(values, helpers) => {
+          console.log('helpers', helpers);
+          return { something: ['Error one', 'Error two', 'Error three'] };
+        }}
         handleSubmit={console.log}
       >
         {props => {

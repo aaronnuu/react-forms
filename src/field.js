@@ -373,7 +373,7 @@ class Field extends Component {
     const {
       name,
       validate,
-      reactForms: { validateForm }
+      reactForms: { validateForm, getFormHelpers }
     } = this.props;
 
     // Run both field level and form level validations
@@ -383,7 +383,7 @@ class Field extends Component {
     const syncErrors = [];
 
     if (isFunction(validate)) {
-      const maybePromisedError = validate(value) || null;
+      const maybePromisedError = validate(value, getFormHelpers(true)) || null;
       if (isPromise(maybePromisedError)) {
         asyncValidators.push(maybePromisedError);
       } else {
@@ -393,7 +393,7 @@ class Field extends Component {
 
     if (isFunction(validateForm)) {
       const values = set({}, name, value);
-      const maybePromisedErrors = validateForm(values);
+      const maybePromisedErrors = validateForm(values, getFormHelpers(true));
 
       if (isPromise(maybePromisedErrors)) {
         asyncValidators.push(maybePromisedErrors);
