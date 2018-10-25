@@ -244,18 +244,19 @@ class ReactForms extends Component {
   startSubmit () {
     const { fields } = this.state;
 
-    this.setFormState(prevState => ({
-      ...prevState,
-      submitCount: prevState.submitCount + 1,
-      isSubmitting: true
-    }));
-
     this.setTouched(
       Object.keys(fields).reduce((acc, name) => {
         set(acc, name, true);
         return acc;
-      }, {})
+      }, {}),
+      false
     );
+
+    return this.setFormState(prevState => ({
+      ...prevState,
+      submitCount: prevState.submitCount + 1,
+      isSubmitting: true
+    }));
   }
 
   runValidations () {
@@ -383,18 +384,17 @@ class ReactForms extends Component {
     }
 
     if (!isSubmitting) {
-      this.startSubmit();
+      await this.startSubmit();
 
       const maybePromisedErrors = this.runValidations();
 
       if (isPromise(maybePromisedErrors)) {
         const errors = await maybePromisedErrors;
         await this.setErrors(errors, false, true);
-        return this.executeSubmit();
       } else {
         await this.setErrors(maybePromisedErrors, false, true);
-        return this.executeSubmit();
       }
+      return this.executeSubmit();
     }
 
     // False if form didn't submit

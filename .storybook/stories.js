@@ -60,17 +60,21 @@ class AsyncInitialValues extends Component {
         validateOnChange
         touchOnChange
         asyncValuesReady={!this.state.loading}
-        validate={() => ({
-          test: 'goodbye',
-          'testing.nested.one_more': 'one more error',
-          testing: {
-            another: { something: 'another' },
-            nested: {
-              object: 'hello',
-              something: "Some really long error that just doesn't seem to end."
+        validate={(values, helpers) => {
+          console.log('validate', values, helpers);
+          return {
+            test: 'goodbye',
+            'testing.nested.one_more': 'one more error',
+            testing: {
+              another: { something: 'another' },
+              nested: {
+                object: 'hello',
+                something:
+                  "Some really long error that just doesn't seem to end."
+              }
             }
-          }
-        })}
+          };
+        }}
         handleSubmit={console.log}
       >
         {props => {
@@ -81,6 +85,10 @@ class AsyncInitialValues extends Component {
                   sendImmediate
                   name="test"
                   initialValue={this.state.initialValues.test}
+                  validate={(values, helpers) => {
+                    console.log('field validate', values, helpers);
+                    return null;
+                  }}
                 />
                 <Field
                   name="testing.nested.object"
