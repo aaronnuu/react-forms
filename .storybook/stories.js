@@ -57,6 +57,8 @@ class AsyncInitialValues extends Component {
   render() {
     return (
       <ReactForms
+        validateOnMount
+        touchOnMount
         validateOnChange
         touchOnChange
         asyncValuesReady={!this.state.loading}
@@ -195,6 +197,7 @@ class FieldArrayTest extends Component {
       <ReactForms
         validateOnChange
         touchOnChange
+        shouldUnregister={false}
         validate={(values, helpers) => {
           console.log('helpers', helpers);
           return { something: ['Error one', 'Error two', 'Error three'] };

@@ -19,6 +19,7 @@ class ReactForms extends Component {
     validateOnMount: false,
     validateOnChange: true,
     validateOnBlur: true,
+    touchOnMount: false,
     touchOnChange: true,
     touchOnBlur: true,
     shouldUnregister: true,
@@ -452,6 +453,7 @@ class ReactForms extends Component {
       validateOnMount,
       validateOnChange,
       validateOnBlur,
+      touchOnMount,
       touchOnChange,
       touchOnBlur,
       shouldUnregister
@@ -467,6 +469,7 @@ class ReactForms extends Component {
           validateOnMount,
           validateOnChange,
           validateOnBlur,
+          touchOnMount,
           touchOnChange,
           touchOnBlur,
           shouldUnregister,

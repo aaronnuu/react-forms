@@ -57,27 +57,31 @@ Sometimes you want to render a form before some asynchrounous data that will be 
 
 #### `initialValues: { [fieldName]: value }`
 
-The initial values that each field will be given
+The initial values for the whole form, keyed by each fields name. Individual fields' `initialValue` prop will take precedence over the value given in this object.
 
 #### `validateOnMount: boolean (false)`
 
-Whether or not to run validations when the field is mounted
+Whether or not to run validations when the field is mounted.
 
 #### `validateOnChange: boolean (true)`
 
-Whether or not to run validations when the field value changes
+Whether or not to run validations when the field value changes.
 
 #### `validateOnBlur: boolean (true)`
 
-Whether or not to run validations when the field is blurred
+Whether or not to run validations when the field is blurred.
+
+#### `touchOnMount: boolean (false)`
+
+Whether or not the field is considered touched when it mounts. This works well with the `validateOnMount` prop and `isValid` state to validate a form as it mounts, not show any errors but disable a button.
 
 #### `touchOnChange: boolean (true)`
 
-Whether or not any field is considered to be touched when it's value changes
+Whether or not any field is considered to be touched when it's value changes.
 
 #### `touchOnBlur: boolean (true)`
 
-Whether or not any field is considered touched when it is blurred
+Whether or not any field is considered touched when it is blurred.
 
 #### `shouldUnregister: boolean (true)`
 
@@ -89,7 +93,7 @@ The function that will run when the form is submitted or when the `submitForm` f
 
 #### `validate: (values) => Promise|Object`
 
-The function that will be used to validate each field. Can either return a promise or an object
+The function that will be used to validate each field. Can either return a promise that resolves to an object of strings, keyed by the field name (indicating a failed validation for that field) or just a plain object of strings keyed by the field name.
 
 ### Form
 
@@ -97,7 +101,7 @@ This is a convenience component that attaches the form's `submitForm` method ont
 
 ### Props
 
-Anything that a HTML5 `<form />` takes
+Anything that a HTML5 `<form />` takes.
 
 ### Field
 
@@ -110,6 +114,54 @@ In most cases you will want be unregistering `<Field />`'s as they are unmounted
 These entries will also have their validation methods run which _could_ stop the form from submitting without showing anything to the user as the field the error should be attached to is now gone. The best way around this is to make sure the validation passes before unmounting the field, or by having a dynamic validation method that changes what fields are validated based on what is visible.
 
 ### Props
+
+#### `name: string` - required
+
+The name given to a field is the key to interacting with that field. It is the key for all of it's state and also the first argument given to all of the individual `setField` methods.
+
+This is the only prop that is required.
+
+#### `initialValue: any ('')`
+
+This is the initial value of the `<Field />` defaulted to an empty string to make the text-input use case simpler.
+
+#### `sendImmediate: boolean (false)`
+
+This sends state up to the parent container `onChange` as well as `onBlur`.
+
+#### `shouldUnregister: boolean (true)`
+
+Whether or not this particular field will unregister itself when it's name changes or it unmounts.
+
+#### `validate: Function`
+
+Function that will be run when the field is being validated, should return a string (the error message) to indicate failed validation, or a falsey value to indicate passed validation.
+
+Both this function and the parent `validate` function will be run every time validation is performed, with the parent `validate` result only being used if the individual field validation returns a falsey value.
+
+#### `children: Function`
+
+The render prop that will be rendered and passed all field specific props and actions for the user to decide what to do with them.
+
+#### `render: Function`
+
+Same as `children`
+
+#### `Component: React Component/Element/String: ('input')`
+
+The component that will be rendered and given all of the field specific props / actions (id, name, value, onFocus, onChange, onBlur). This takes the last priority and should only be given if render and children and undefined.
+
+#### `onFocus: Function (noop)`
+
+Function that will passed the react event and will run before the internal `onFocus` logic.
+
+#### `onChange: Function (noop)`
+
+Function that will passed the react event and will run before the internal `onChange` logic.
+
+#### `onBlur: Function (noop)`
+
+Function that will passed the react event and will run before the internal `onBlur` logic.
 
 ## Example
 

@@ -30,7 +30,7 @@ class Field extends Component {
       shouldUnregister,
       reactForms: {
         initialValues,
-        validateOnMount,
+        touchOnMount,
         shouldUnregister: formShouldUnregister,
         registerField
       }
@@ -45,7 +45,7 @@ class Field extends Component {
       : !isNullOrUndefined(formInitialValue)
         ? formInitialValue
         : '';
-    const touched = validateOnMount;
+    const touched = !!touchOnMount;
     const error = null;
 
     this.state = {
@@ -132,7 +132,12 @@ class Field extends Component {
   getRegistrations (initialValue) {
     const {
       validate,
-      reactForms: { validateOnMount, validateOnChange, validateOnBlur }
+      reactForms: {
+        validateOnMount,
+        validateOnChange,
+        validateOnBlur,
+        touchOnMount
+      }
     } = this.props;
 
     return {
@@ -206,7 +211,7 @@ class Field extends Component {
       reset: (val, shouldValidate = validateOnMount) => {
         return new Promise(async resolve => {
           const value = !isNullOrUndefined(val) ? val : initialValue;
-          const touched = shouldValidate && validateOnMount;
+          const touched = shouldValidate && !!touchOnMount;
           const maybePromisedError =
             (shouldValidate && this.handleValidate(value)) || null;
 
@@ -541,6 +546,7 @@ class Field extends Component {
     const { name } = this.props;
 
     return {
+      id: this.id,
       name,
       value,
       meta: {
