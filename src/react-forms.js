@@ -196,15 +196,10 @@ class ReactForms extends Component {
   }
 
   setMeta (meta) {
-    return new Promise(resolve => {
-      this.setFormState(
-        prevState => ({
-          ...prevState,
-          meta
-        }),
-        resolve
-      );
-    });
+    return this.setFormState(prevState => ({
+      ...prevState,
+      meta
+    }));
   }
 
   resetForm (values) {
