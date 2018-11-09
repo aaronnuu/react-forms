@@ -33,7 +33,6 @@ class ReactForms extends Component {
     isSubmitting: false,
     isValidating: false
   };
-  initialValues = {};
 
   constructor (props) {
     super(props);
@@ -75,13 +74,13 @@ class ReactForms extends Component {
     }
   ) {
     this.setFormState(prevState => {
-      this.initialValues = set({ ...this.initialValues }, name, initialValue);
       return {
         ...prevState,
         fields: {
           ...prevState.fields,
           [name]: {
             id,
+            initialValue,
             value: initialValue,
             touched: initialTouched,
             error: initialError,
@@ -101,7 +100,6 @@ class ReactForms extends Component {
       const { fields } = prevState;
 
       const newFields = { ...fields };
-      const newInitialValues = { ...this.initialValues };
 
       // Find and unregister by ID so that fields can swap names
       // without then unregistering the field that swapped with them
@@ -113,9 +111,6 @@ class ReactForms extends Component {
 
       if (name) {
         unset(newFields, name);
-        unset(newInitialValues, name);
-
-        this.initialValues = newInitialValues;
 
         return {
           ...prevState,
@@ -202,13 +197,21 @@ class ReactForms extends Component {
     }));
   }
 
-  resetForm (values) {
+  resetForm (values, shouldValidate) {
     const { fields } = this.state;
     const promises = [];
     Object.keys(fields).forEach(name => {
-      promises.push(fields[name].reset(get(values, name)));
+      promises.push(fields[name].reset(get(values, name), shouldValidate));
     });
     return Promise.all(promises);
+  }
+
+  getInitialValues () {
+    const { fields } = this.state;
+    return Object.keys(fields).reduce((acc, name) => {
+      set(acc, name, fields[name].initialValue);
+      return acc;
+    }, {});
   }
 
   getValues () {
@@ -398,11 +401,12 @@ class ReactForms extends Component {
   }
 
   getComputedProps () {
+    const initialValues = this.getInitialValues();
     const values = this.getValues();
     const errors = this.getErrors();
 
     return {
-      isDirty: !isEqual(this.initialValues, values),
+      isDirty: !isEqual(initialValues, values),
       isValid: Object.keys(errors).length <= 0
     };
   }

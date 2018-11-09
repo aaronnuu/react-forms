@@ -221,6 +221,7 @@ class Field extends Component {
               value,
               touched
             })),
+            this.sendInitialValue(value),
             this.sendValue(value),
             this.sendTouched(touched)
           ];
@@ -327,6 +328,21 @@ class Field extends Component {
     if (this.shouldUnregister) {
       unregisterField(this.id);
     }
+  }
+
+  sendInitialValue (value) {
+    const {
+      name,
+      reactForms: { setFormState }
+    } = this.props;
+
+    return setFormState(prevState => ({
+      ...prevState,
+      fields: {
+        ...prevState.fields,
+        [name]: set({ ...prevState.fields[name] }, 'initialValue', value)
+      }
+    }));
   }
 
   sendValue (value) {

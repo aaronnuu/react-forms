@@ -113,6 +113,17 @@ class AsyncInitialValues extends Component {
                 >
                   Toggle disable
                 </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    props.resetForm({
+                      test: 'test value',
+                      testing: { nested: { object: 'new reset value' } }
+                    });
+                  }}
+                >
+                  Reset
+                </button>
                 <button type="button" onClick={() => props.submitForm()}>
                   Submit
                 </button>
