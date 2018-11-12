@@ -17,13 +17,14 @@ storiesOf('React Forms', module)
   ))
   .add('Async initial values', () => <AsyncInitialValues />)
   .add('With form test', () => <WithFormTest />)
-  .add('RepeaterField test', () => <FieldArrayTest />);
+  .add('RepeaterField test', () => <FieldArrayTest />)
+  .add('State batching test', () => <UnmountedStateUpdateTest />);
 
 const CustomInput = props => {
   return (
     <Fragment>
       <input {...props.field} checked={!!props.field.value} type="checkbox" />
-      <p>{JSON.stringify(props, null, 2)}</p>
+      {props.showJson && <p>{JSON.stringify(props, null, 2)}</p>}
     </Fragment>
   );
 };
@@ -123,6 +124,14 @@ class AsyncInitialValues extends Component {
                   }}
                 >
                   Reset
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    props.resetForm();
+                  }}
+                >
+                  Reset no values
                 </button>
                 <button type="button" onClick={() => props.submitForm()}>
                   Submit
@@ -341,6 +350,101 @@ class FieldArrayTest extends Component {
               </Form>
               <pre>{JSON.stringify(props, null, 2)}</pre>
             </Fragment>
+          );
+        }}
+      </ReactForms>
+    );
+  }
+}
+
+class UnmountedStateUpdateTest extends Component {
+  state = {
+    visible: true
+  };
+
+  render() {
+    const { visible } = this.state;
+
+    return (
+      <ReactForms
+        validateOnChange
+        touchOnChange
+        shouldUnregister={false}
+        handleSubmit={console.log}
+      >
+        {props => {
+          return (
+            <div>
+              <Form>
+                <Field sendImmediate name="test" />
+                {visible && (
+                  <Field
+                    name="testing.nested.object"
+                    Component={({ field, meta }) => {
+                      return (
+                        <Fragment>
+                          <input {...field} />
+                          <pre>{JSON.stringify(meta, null, 2)}</pre>
+                        </Fragment>
+                      );
+                    }}
+                  />
+                )}
+                {visible && (
+                  <Field
+                    sendImmediate
+                    name="testing.another.something"
+                    initialValue={true}
+                    Component={CustomInput}
+                    showJson={false}
+                  />
+                )}
+                <Field name="testing.nested.something" />
+                <Field name="testing.nested.one_more" />
+                <button
+                  type="button"
+                  onClick={() => {
+                    this.setState({ visible: !visible });
+                  }}
+                >
+                  Toggle visible
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    props.setFieldValue(
+                      'testing.nested.object',
+                      'Some new fancy value'
+                    );
+                  }}
+                >
+                  Change field value
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    props.setFieldTouched('testing.nested.object', true, false);
+                  }}
+                >
+                  Change field touched
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    props.setFieldError(
+                      'testing.nested.object',
+                      'Some new fancy error'
+                    );
+                  }}
+                >
+                  Change field error
+                </button>
+                <button type="button" onClick={() => props.submitForm()}>
+                  Submit
+                </button>
+              </Form>
+              <pre>{JSON.stringify(props, null, 2)}</pre>
+            </div>
           );
         }}
       </ReactForms>

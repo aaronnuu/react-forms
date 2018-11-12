@@ -29,6 +29,9 @@ class Field extends Component {
       initialValue,
       shouldUnregister,
       reactForms: {
+        values: currentValues,
+        touched: currentTouched,
+        errors: currentErrors,
         initialValues,
         touchOnMount,
         shouldUnregister: formShouldUnregister,
@@ -40,19 +43,30 @@ class Field extends Component {
 
     const formInitialValue = get(initialValues, name);
 
-    const value = !isNullOrUndefined(initialValue)
-      ? initialValue
-      : !isNullOrUndefined(formInitialValue)
-        ? formInitialValue
-        : '';
-    const touched = !!touchOnMount;
-    const error = null;
+    const currentFormValue = get(currentValues, name);
+    const currentFormTouched = get(currentTouched, name);
+    const currentFormError = get(currentErrors, name);
+
+    const value = !isNullOrUndefined(currentFormValue)
+      ? currentFormValue
+      : !isNullOrUndefined(initialValue)
+        ? initialValue
+        : !isNullOrUndefined(formInitialValue)
+          ? formInitialValue
+          : '';
+    const touched = !isNullOrUndefined(currentFormTouched)
+      ? currentFormTouched
+      : !!touchOnMount;
+    const error = !isNullOrUndefined(currentFormError)
+      ? currentFormError
+      : null;
 
     this.state = {
       value,
       touched,
       error,
       focused: false,
+      initialValue: value,
       isValidating: false
     };
 
@@ -67,7 +81,7 @@ class Field extends Component {
       initialValue: value,
       initialTouched: touched,
       initialError: error,
-      ...this.getRegistrations(value)
+      ...this.getRegistrations()
     });
 
     this.setFieldState = this.setFieldState.bind(this);
@@ -129,7 +143,7 @@ class Field extends Component {
     return false;
   }
 
-  getRegistrations (initialValue) {
+  getRegistrations () {
     const {
       validate,
       reactForms: {
@@ -210,6 +224,7 @@ class Field extends Component {
       },
       reset: (val, shouldValidate = validateOnMount) => {
         return new Promise(async resolve => {
+          const { initialValue } = this.state;
           const value = !isNullOrUndefined(val) ? val : initialValue;
           const touched = shouldValidate && !!touchOnMount;
           const maybePromisedError =
@@ -219,7 +234,8 @@ class Field extends Component {
             this.setFieldState(prevState => ({
               ...prevState,
               value,
-              touched
+              touched,
+              initialValue: value
             })),
             this.sendInitialValue(value),
             this.sendValue(value),
@@ -313,7 +329,7 @@ class Field extends Component {
         initialValue: value,
         initialTouched: touched,
         initialError: error,
-        ...this.getRegistrations(value)
+        ...this.getRegistrations()
       });
     }
   }
@@ -453,7 +469,7 @@ class Field extends Component {
     }
 
     // If no validation then set error to null
-    this.setState(prevState => ({
+    this.setFieldState(prevState => ({
       ...prevState,
       error: null
     }));
@@ -558,7 +574,14 @@ class Field extends Component {
   }
 
   getFieldProps () {
-    const { value, touched, error, focused, isValidating } = this.state;
+    const {
+      value,
+      touched,
+      error,
+      focused,
+      initialValue,
+      isValidating
+    } = this.state;
     const { name } = this.props;
 
     return {
@@ -569,6 +592,7 @@ class Field extends Component {
         error,
         touched,
         focused,
+        initialValue,
         isValidating
       },
       onFocus: this.handleFocus,
