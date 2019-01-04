@@ -1,5 +1,7 @@
 # @aaronuu/react-forms
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/aaronnuu/react-forms.svg)](https://greenkeeper.io/)
+
 **WIP README** - Some features are not documented yet
 
 ## Features
