@@ -217,7 +217,7 @@ class FieldArrayTest extends Component {
       <ReactForms
         validateOnChange
         touchOnChange
-        shouldUnregister={false}
+        shouldUnregister
         validate={(values, helpers) => {
           console.log('helpers', helpers);
           return { something: ['Error one', 'Error two', 'Error three'] };
@@ -228,39 +228,7 @@ class FieldArrayTest extends Component {
           return (
             <Fragment>
               <Form>
-                <FieldArray
-                  name="something-something"
-                  Component={({ field }) => {
-                    return (
-                      <Fragment>
-                        <input
-                          {...field}
-                          value={field.value.one}
-                          onChange={e =>
-                            field.onChange({
-                              target: {
-                                type: 'text',
-                                value: { ...field.value, one: e.target.value }
-                              }
-                            })
-                          }
-                        />
-                        <input
-                          {...field}
-                          value={field.value.two}
-                          onChange={e =>
-                            field.onChange({
-                              target: {
-                                type: 'text',
-                                value: { ...field.value, two: e.target.value }
-                              }
-                            })
-                          }
-                        />
-                      </Fragment>
-                    );
-                  }}
-                >
+                <FieldArray name="something-something">
                   {({
                     fields,
                     getFieldProps,
