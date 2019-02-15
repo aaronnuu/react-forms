@@ -337,10 +337,18 @@ class UnmountedStateUpdateTest extends Component {
       <ReactForms
         validateOnChange
         touchOnChange
+        validate={values => {
+          const errors = {};
+          if (values.testing.nested.object !== 'Hello') {
+            errors['testing.nested.object'] = 'Must be the string "Hello"';
+          }
+          return errors;
+        }}
         shouldUnregister={false}
         handleSubmit={console.log}
       >
         {props => {
+          console.count('rendering');
           return (
             <div>
               <Form>
