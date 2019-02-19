@@ -135,10 +135,10 @@ class ReactForms extends Component {
       },
       this.state
     );
+    this.pendingStateUpdates = [];
     this.setState(newState, () => {
       callbacks.forEach(c => c());
     });
-    this.pendingStateUpdates = [];
   }, 20);
 
   batchState (state, callback) {
