@@ -1,5 +1,8 @@
 import React, { Component } from 'react';
-import { isFunction, uuid } from './utils';
+import isEqual from 'react-fast-compare';
+import { isFunction, uuid, isObject } from './utils';
+import withContext from './containers/with-context';
+import get from 'lodash.get';
 
 const push = (array = [], field = {}) => {
   const copy = [...array];
@@ -51,6 +54,7 @@ const remove = (array = [], index) => {
   return [...array.slice(0, index), ...array.slice(index + 1, array.length)];
 };
 
+@withContext
 class FieldArray extends Component {
   static defaultProps = {
     initialFields: []
@@ -58,11 +62,26 @@ class FieldArray extends Component {
 
   constructor (props) {
     super(props);
+    const {
+      name,
+      initialFields,
+      reactForms: { values }
+    } = props;
+
+    const fields = [
+      ...Array(Math.max(initialFields.length, (get(values, name) || []).length))
+    ].map((_, index) => ({
+      id: uuid(),
+      ...initialFields[index],
+      initialValue: (get(values, name) || [])[index]
+    }));
+
     this.state = {
-      fields: this.props.initialFields.map(field => ({ id: uuid(), ...field }))
+      initialFields: fields,
+      fields
     };
 
-    this.fieldArrayState = {
+    this.fieldArrayHelpers = {
       push: this.push.bind(this),
       pop: this.pop.bind(this),
       unshift: this.unshift.bind(this),
@@ -71,6 +90,7 @@ class FieldArray extends Component {
       insert: this.insert.bind(this),
       replace: this.replace.bind(this),
       remove: this.remove.bind(this),
+      reset: this.reset.bind(this),
       getFieldProps: this.getFieldProps.bind(this)
     };
   }
@@ -83,16 +103,23 @@ class FieldArray extends Component {
   }
 
   pop () {
-    this.setState(prevState => ({
-      ...prevState,
-      fields: pop(prevState.fields)
-    }));
+    this.setState(prevState => {
+      const {
+        reactForms: { unregisterField }
+      } = this.props;
+      const fieldId = prevState.fields[prevState.fields.length - 1].id;
+      unregisterField(fieldId);
+      return {
+        ...prevState,
+        fields: pop(prevState.fields)
+      };
+    });
   }
 
-  unshift () {
+  unshift (field) {
     this.setState(prevState => ({
       ...prevState,
-      fields: unshift(prevState.fields)
+      fields: unshift(prevState.fields, field)
     }));
   }
 
@@ -125,14 +152,41 @@ class FieldArray extends Component {
   }
 
   remove (index) {
-    this.setState(prevState => ({
-      ...prevState,
-      fields: remove(prevState.fields, index)
-    }));
+    this.setState(prevState => {
+      const {
+        reactForms: { unregisterField }
+      } = this.props;
+      const fieldId = prevState.fields[prevState.fields.length - 1].id;
+      unregisterField(fieldId);
+      return {
+        ...prevState,
+        fields: remove(prevState.fields, index)
+      };
+    });
+  }
+
+  reset (newFields) {
+    this.setState(prevState => {
+      const fields =
+        newFields.map(field => ({ id: uuid(), ...field })) ||
+        prevState.initialFields.map(field => ({ id: uuid(), ...field }));
+      return {
+        ...prevState,
+        initialFields: fields,
+        fields
+      };
+    });
   }
 
   getFieldProps (field, index) {
-    const { name, initialFields, render, children, ...rest } = this.props;
+    const {
+      name,
+      initialFields,
+      render,
+      children,
+      reactForms,
+      ...rest
+    } = this.props;
 
     return {
       key: field.id,
@@ -143,23 +197,24 @@ class FieldArray extends Component {
   }
 
   getFieldArrayProps () {
-    const { fields } = this.state;
+    const { fields, initialFields } = this.state;
 
     return {
       fields,
-      ...this.fieldArrayState
+      isDirty: !isEqual(fields, initialFields),
+      ...this.fieldArrayHelpers
     };
   }
 
   render () {
     const { render, children } = this.props;
 
-    const fieldArrayState = this.getFieldArrayProps();
+    const fieldArrayProps = this.getFieldArrayProps();
 
     return isFunction(children)
-      ? children(fieldArrayState)
+      ? children(fieldArrayProps)
       : isFunction(render)
-        ? render(fieldArrayState)
+        ? render(fieldArrayProps)
         : null;
   }
 }

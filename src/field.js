@@ -25,6 +25,7 @@ class Field extends Component {
 
   constructor (props) {
     const {
+      id,
       name,
       initialValue,
       shouldUnregister,
@@ -47,19 +48,21 @@ class Field extends Component {
     const currentFormTouched = get(currentTouched, name);
     const currentFormError = get(currentErrors, name);
 
-    const value = !isNullOrUndefined(currentFormValue)
-      ? currentFormValue
-      : !isNullOrUndefined(initialValue)
-        ? initialValue
-        : !isNullOrUndefined(formInitialValue)
-          ? formInitialValue
-          : '';
-    const touched = !isNullOrUndefined(currentFormTouched)
-      ? currentFormTouched
-      : !!touchOnMount;
-    const error = !isNullOrUndefined(currentFormError)
-      ? currentFormError
-      : null;
+    const value =
+      !id && !isNullOrUndefined(currentFormValue)
+        ? currentFormValue
+        : !isNullOrUndefined(initialValue)
+          ? initialValue
+          : !id && !isNullOrUndefined(formInitialValue)
+            ? formInitialValue
+            : '';
+
+    const touched =
+      !id && !isNullOrUndefined(currentFormTouched)
+        ? currentFormTouched
+        : !!touchOnMount;
+    const error =
+      !id && !isNullOrUndefined(currentFormError) ? currentFormError : null;
 
     this.state = {
       value,
@@ -70,7 +73,7 @@ class Field extends Component {
       isValidating: false
     };
 
-    this.id = uuid();
+    this.id = id || uuid();
     this.mounted = false;
     this.shouldUnregister = !isNullOrUndefined(shouldUnregister)
       ? shouldUnregister
@@ -85,7 +88,6 @@ class Field extends Component {
     });
 
     this.setFieldState = this.setFieldState.bind(this);
-    this.getRegistrations = this.getRegistrations.bind(this);
     this.handleValidate = this.handleValidate.bind(this);
     this.handleFocus = this.handleFocus.bind(this);
     this.handleChange = this.handleChange.bind(this);
@@ -410,7 +412,7 @@ class Field extends Component {
     const {
       name,
       validate,
-      reactForms: { validateForm, getFormHelpers }
+      reactForms: { values: formValues, validateForm, getFormHelpers }
     } = this.props;
 
     // Run both field level and form level validations
@@ -420,7 +422,8 @@ class Field extends Component {
     const syncErrors = [];
 
     if (isFunction(validate)) {
-      const maybePromisedError = validate(value, getFormHelpers(true)) || null;
+      const values = set({ ...formValues }, name, value);
+      const maybePromisedError = validate(values, getFormHelpers(true)) || null;
       if (isPromise(maybePromisedError)) {
         asyncValidators.push(maybePromisedError);
       } else {
@@ -429,7 +432,7 @@ class Field extends Component {
     }
 
     if (isFunction(validateForm)) {
-      const values = set({}, name, value);
+      const values = set({ ...formValues }, name, value);
       const maybePromisedErrors = validateForm(values, getFormHelpers(true));
 
       if (isPromise(maybePromisedErrors)) {
@@ -574,27 +577,14 @@ class Field extends Component {
   }
 
   getFieldProps () {
-    const {
-      value,
-      touched,
-      error,
-      focused,
-      initialValue,
-      isValidating
-    } = this.state;
+    const { value } = this.state;
     const { name } = this.props;
 
     return {
+      key: this.id,
       id: this.id,
       name,
       value,
-      meta: {
-        error,
-        touched,
-        focused,
-        initialValue,
-        isValidating
-      },
       onFocus: this.handleFocus,
       onChange: this.handleChange,
       onBlur: this.handleBlur
@@ -602,7 +592,13 @@ class Field extends Component {
   }
 
   render () {
-    const { meta, ...restField } = this.getFieldProps();
+    const {
+      focused,
+      touched,
+      error,
+      isValidating,
+      initialValue: currentInitialValue
+    } = this.state;
     const {
       initialValue,
       reactForms,
@@ -618,12 +614,18 @@ class Field extends Component {
       ...restProps
     } = this.props;
 
+    const fieldProps = this.getFieldProps();
+
     const props = {
       ...restProps,
-      field: {
-        ...restField
-      },
-      meta
+      field: fieldProps,
+      meta: {
+        focused,
+        touched,
+        error,
+        isValidating,
+        initialValue: currentInitialValue
+      }
     };
 
     return isFunction(children)
@@ -633,7 +635,7 @@ class Field extends Component {
         : isFunction(InputComponent)
           ? React.createElement(InputComponent, props)
           : InputComponent
-            ? React.createElement(InputComponent, restField)
+            ? React.createElement(InputComponent, fieldProps)
             : null;
   }
 }

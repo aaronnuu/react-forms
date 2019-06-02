@@ -10,13 +10,16 @@ import {
   isPromise,
   noop,
   concatenateErrors,
-  flattenArray
+  flatten,
+  flattenArray,
+  uuid
 } from './utils';
 
 const { Provider, Consumer } = createContext();
 
 class ReactForms extends Component {
   static defaultProps = {
+    initialValues: {},
     validateOnMount: false,
     validateOnChange: true,
     validateOnBlur: true,
@@ -28,7 +31,7 @@ class ReactForms extends Component {
   };
 
   state = {
-    fields: {},
+    fields: this.getInitialFields(),
     meta: null,
     submitCount: 0,
     isSubmitting: false,
@@ -60,6 +63,59 @@ class ReactForms extends Component {
     this.getComputedProps = this.getComputedProps.bind(this);
     this.getFormHelpers = this.getFormHelpers.bind(this);
     this.getFormState = this.getFormState.bind(this);
+  }
+
+  getInitialFields () {
+    const { initialValues } = this.props;
+    const entries = Object.entries(flatten(initialValues));
+    return entries.reduce((acc, [key, val]) => {
+      acc[key] = {
+        id: uuid(),
+        initialValue: val,
+        value: val,
+        touched: false,
+        error: null,
+        setValue: value =>
+          this.setFormState(prevState => ({
+            ...prevState,
+            fields: {
+              ...prevState.fields[key],
+              value
+            }
+          })),
+        setTouched: touched =>
+          this.setFormState(prevState => ({
+            ...prevState,
+            fields: {
+              ...prevState.fields[key],
+              touched
+            }
+          })),
+        setError: error =>
+          this.setFormState(prevState => ({
+            ...prevState,
+            fields: {
+              ...prevState.fields[key],
+              error
+            }
+          })),
+        reset: newVal =>
+          this.setFormState(prevState => {
+            const initialValue = newVal || prevState.fields[key].initialValue;
+            return {
+              ...prevState,
+              fields: {
+                ...prevState.fields[key],
+                initialValue,
+                value: initialValue,
+                touched: false,
+                error: null
+              }
+            };
+          })
+      };
+      return acc;
+    }, {});
   }
 
   registerField (

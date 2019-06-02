@@ -215,12 +215,17 @@ class FieldArrayTest extends Component {
   render() {
     return (
       <ReactForms
+        initialValues={{
+          'something-something': ['Hello', 'Goodbye']
+        }}
         validateOnChange
         touchOnChange
-        shouldUnregister
+        shouldUnregister={false}
         validate={(values, helpers) => {
           console.log('helpers', helpers);
-          return { something: ['Error one', 'Error two', 'Error three'] };
+          return {
+            'something-something': ['Error one', 'Error two', 'Error three']
+          };
         }}
         handleSubmit={console.log}
       >
@@ -239,7 +244,8 @@ class FieldArrayTest extends Component {
                     move,
                     insert,
                     replace,
-                    remove
+                    remove,
+                    reset
                   }) => {
                     return (
                       <Fragment>
@@ -309,6 +315,17 @@ class FieldArrayTest extends Component {
                           }}
                         >
                           Remove
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            reset([
+                              { initialValue: 'Goodbye' },
+                              { initialValue: 'Hello' }
+                            ]);
+                          }}
+                        >
+                          Reset
                         </button>
                         <button type="submit">Submit</button>
                       </Fragment>
