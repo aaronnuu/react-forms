@@ -202,8 +202,8 @@ class FormContainer extends Component {
                 <Field
                   name="email"
                   initialValue="new@email.com"
-                  validate={value => {
-                    if (value !== /email_regex/) {
+                  validate={values => {
+                    if (values.email !== /email_regex/) {
                       return 'Invalid email';
                     }
                     return null;

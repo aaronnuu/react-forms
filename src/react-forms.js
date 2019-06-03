@@ -67,7 +67,7 @@ class ReactForms extends Component {
 
   getInitialFields () {
     const { initialValues } = this.props;
-    const entries = Object.entries(flatten(initialValues));
+    const entries = Object.entries(initialValues);
     return entries.reduce((acc, [key, val]) => {
       acc[key] = {
         id: uuid(),
@@ -79,24 +79,33 @@ class ReactForms extends Component {
           this.setFormState(prevState => ({
             ...prevState,
             fields: {
-              ...prevState.fields[key],
-              value
+              ...prevState.fields,
+              [key]: {
+                ...prevState.fields[key],
+                value
+              }
             }
           })),
         setTouched: touched =>
           this.setFormState(prevState => ({
             ...prevState,
             fields: {
-              ...prevState.fields[key],
-              touched
+              ...prevState.fields,
+              [key]: {
+                ...prevState.fields[key],
+                touched
+              }
             }
           })),
         setError: error =>
           this.setFormState(prevState => ({
             ...prevState,
             fields: {
-              ...prevState.fields[key],
-              error
+              ...prevState.fields,
+              [key]: {
+                ...prevState.fields[key],
+                error
+              }
             }
           })),
         reset: newVal =>
