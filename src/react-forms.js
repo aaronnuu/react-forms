@@ -401,7 +401,7 @@ class ReactForms extends Component {
         ...prevState,
         isSubmitting: false
       }));
-      blockSubmission = false;
+      this.blockSubmission = false;
     }
   }
 
