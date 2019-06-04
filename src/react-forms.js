@@ -35,6 +35,7 @@ class ReactForms extends Component {
     isValidating: false
   };
 
+  blockSubmission = false;
   pendingStateUpdates = [];
 
   constructor (props) {
@@ -384,6 +385,7 @@ class ReactForms extends Component {
           ...prevState,
           isSubmitting: true
         }));
+        this.blockSubmission = true;
         const submit = handleSubmit(values, this.getFormHelpers(true));
         if (isPromise(submit)) {
           const submission = await submit;
@@ -399,6 +401,7 @@ class ReactForms extends Component {
         ...prevState,
         isSubmitting: false
       }));
+      this.blockSubmission = false;
     }
   }
 
@@ -409,23 +412,23 @@ class ReactForms extends Component {
       e.preventDefault();
     }
 
-    if (!isSubmitting) {
-      await this.startSubmit();
-
-      const maybePromisedErrors = this.runValidations();
-
-      if (isPromise(maybePromisedErrors)) {
-        const errors = await maybePromisedErrors;
-        await this.setErrors(errors, false, true);
-      } else {
-        await this.setErrors(maybePromisedErrors, false, true);
-      }
-
-      return this.executeSubmit();
+    if (isSubmitting || this.blockSubmission) {
+      // return false if form did not submit
+      return false;
     }
 
-    // False if form didn't submit
-    return false;
+    await this.startSubmit();
+
+    const maybePromisedErrors = this.runValidations();
+
+    if (isPromise(maybePromisedErrors)) {
+      const errors = await maybePromisedErrors;
+      await this.setErrors(errors, false, true);
+    } else {
+      await this.setErrors(maybePromisedErrors, false, true);
+    }
+
+    return this.executeSubmit();
   }
 
   getComputedProps () {
