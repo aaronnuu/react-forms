@@ -410,7 +410,7 @@ class Field extends Component {
     const {
       name,
       validate,
-      reactForms: { validateForm, getFormHelpers }
+      reactForms: { values: formValues, validateForm, getFormHelpers }
     } = this.props;
 
     // Run both field level and form level validations
@@ -429,7 +429,7 @@ class Field extends Component {
     }
 
     if (isFunction(validateForm)) {
-      const values = set({}, name, value);
+      const values = set({ ...formValues }, name, value);
       const maybePromisedErrors = validateForm(values, getFormHelpers(true));
 
       if (isPromise(maybePromisedErrors)) {
