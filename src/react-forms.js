@@ -114,11 +114,14 @@ class ReactForms extends Component {
             return {
               ...prevState,
               fields: {
-                ...prevState.fields[key],
-                initialValue,
-                value: initialValue,
-                touched: false,
-                error: null
+                ...prevState.fields,
+                [key]: {
+                  ...prevState.fields[key],
+                  initialValue,
+                  value: initialValue,
+                  touched: false,
+                  error: null
+                }
               }
             };
           })
