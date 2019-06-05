@@ -415,8 +415,8 @@ class ReactForms extends Component {
       return false;
     }
 
-    await this.startSubmit();
     this.blockSubmission = true;
+    await this.startSubmit();
 
     const maybePromisedErrors = this.runValidations();
 
