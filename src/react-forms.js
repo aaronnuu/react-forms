@@ -385,7 +385,6 @@ class ReactForms extends Component {
           ...prevState,
           isSubmitting: true
         }));
-        this.blockSubmission = true;
         const submit = handleSubmit(values, this.getFormHelpers(true));
         if (isPromise(submit)) {
           const submission = await submit;
@@ -401,7 +400,6 @@ class ReactForms extends Component {
         ...prevState,
         isSubmitting: false
       }));
-      this.blockSubmission = false;
     }
   }
 
@@ -417,6 +415,7 @@ class ReactForms extends Component {
       return false;
     }
 
+    this.blockSubmission = true;
     await this.startSubmit();
 
     const maybePromisedErrors = this.runValidations();
@@ -428,7 +427,9 @@ class ReactForms extends Component {
       await this.setErrors(maybePromisedErrors, false, true);
     }
 
-    return this.executeSubmit();
+    const result = await this.executeSubmit();
+    this.blockSubmission = false;
+    return result;
   }
 
   getComputedProps () {
