@@ -416,20 +416,24 @@ class ReactForms extends Component {
     }
 
     this.blockSubmission = true;
-    await this.startSubmit();
+    try {
+      await this.startSubmit();
 
-    const maybePromisedErrors = this.runValidations();
+      const maybePromisedErrors = this.runValidations();
 
-    if (isPromise(maybePromisedErrors)) {
-      const errors = await maybePromisedErrors;
-      await this.setErrors(errors, false, true);
-    } else {
-      await this.setErrors(maybePromisedErrors, false, true);
+      if (isPromise(maybePromisedErrors)) {
+        const errors = await maybePromisedErrors;
+        await this.setErrors(errors, false, true);
+      } else {
+        await this.setErrors(maybePromisedErrors, false, true);
+      }
+
+      const result = await this.executeSubmit();
+      this.blockSubmission = false;
+      return result;
+    } catch (e) {
+      this.blockSubmission = false;
     }
-
-    const result = await this.executeSubmit();
-    this.blockSubmission = false;
-    return result;
   }
 
   getComputedProps () {
