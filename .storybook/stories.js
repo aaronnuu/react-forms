@@ -18,7 +18,8 @@ storiesOf('React Forms', module)
   .add('Async initial values', () => <AsyncInitialValues />)
   .add('With form test', () => <WithFormTest />)
   .add('RepeaterField test', () => <FieldArrayTest />)
-  .add('State batching test', () => <UnmountedStateUpdateTest />);
+  .add('State batching test', () => <UnmountedStateUpdateTest />)
+  .add('Block submission test', () => <BlockSubmissionTest />);
 
 const CustomInput = props => {
   return (
@@ -421,6 +422,34 @@ class UnmountedStateUpdateTest extends Component {
               </Form>
               <pre>{JSON.stringify(props, null, 2)}</pre>
             </div>
+          );
+        }}
+      </ReactForms>
+    );
+  }
+}
+
+class BlockSubmissionTest extends Component {
+  state = {
+    visible: true
+  };
+
+  render() {
+    const { visible } = this.state;
+
+    return (
+      <ReactForms
+        handleSubmit={() => {
+          throw new Error('hello');
+        }}
+      >
+        {props => {
+          console.log(props.submitCount);
+          return (
+            <Form>
+              <Field name="test" />
+              <button onClick={props.submitForm}>Submit</button>
+            </Form>
           );
         }}
       </ReactForms>

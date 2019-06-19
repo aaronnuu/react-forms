@@ -428,10 +428,8 @@ class ReactForms extends Component {
         await this.setErrors(maybePromisedErrors, false, true);
       }
 
-      const result = await this.executeSubmit();
-      this.blockSubmission = false;
-      return result;
-    } catch (e) {
+      return await this.executeSubmit();
+    } finally {
       this.blockSubmission = false;
     }
   }
