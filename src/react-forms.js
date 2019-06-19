@@ -4,6 +4,7 @@ import createContext from 'create-react-context';
 import get from 'lodash.get';
 import set from 'lodash.set';
 import unset from 'lodash.unset';
+import debounce from 'lodash.debounce';
 import {
   isFunction,
   isPromise,
@@ -33,6 +34,8 @@ class ReactForms extends Component {
     isSubmitting: false,
     isValidating: false
   };
+
+  pendingStateUpdates = [];
 
   constructor (props) {
     super(props);
@@ -122,9 +125,30 @@ class ReactForms extends Component {
     });
   }
 
+  flushBatchedState = debounce(() => {
+    const callbacks = [];
+    const newState = this.pendingStateUpdates.reduce(
+      (acc, [state, callback]) => {
+        acc = { ...acc, ...state(acc) };
+        callbacks.push(callback);
+        return acc;
+      },
+      this.state
+    );
+    this.pendingStateUpdates = [];
+    this.setState(newState, () => {
+      callbacks.forEach(c => c());
+    });
+  }, 20);
+
+  batchState (state, callback) {
+    this.pendingStateUpdates.push([state, callback]);
+    this.flushBatchedState();
+  }
+
   setFormState (state) {
     return new Promise(resolve => {
-      this.setState(state, resolve);
+      this.batchState(state, resolve);
     });
   }
 
@@ -253,8 +277,7 @@ class ReactForms extends Component {
 
     return this.setFormState(prevState => ({
       ...prevState,
-      submitCount: prevState.submitCount + 1,
-      isSubmitting: true
+      submitCount: prevState.submitCount + 1
     }));
   }
 
@@ -357,6 +380,10 @@ class ReactForms extends Component {
       const isValid = Object.keys(errors).length <= 0;
 
       if (isValid) {
+        this.setFormState(prevState => ({
+          ...prevState,
+          isSubmitting: true
+        }));
         const submit = handleSubmit(values, this.getFormHelpers(true));
         if (isPromise(submit)) {
           const submission = await submit;
@@ -393,6 +420,7 @@ class ReactForms extends Component {
       } else {
         await this.setErrors(maybePromisedErrors, false, true);
       }
+
       return this.executeSubmit();
     }
 

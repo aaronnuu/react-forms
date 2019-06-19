@@ -20,7 +20,7 @@ export function isNullOrUndefined (obj) {
 }
 
 // from https://github.com/hughsk/flat/blob/master/index.js
-export function flatten (target) {
+export function flatten (target = {}) {
   const output = {};
 
   function step (obj, prev) {

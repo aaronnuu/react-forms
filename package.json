@@ -1,6 +1,6 @@
 {
   "name": "@aaronuu/react-forms",
-  "version": "0.1.18",
+  "version": "0.1.21",
   "description": "Form state helper for react",
   "main": "dist/index.js",
   "module": "dist/react-forms.esm.js",
@@ -28,6 +28,7 @@
   "dependencies": {
     "babel-runtime": "^6.26.0",
     "create-react-context": "^0.2.3",
+    "lodash.debounce": "^4.0.8",
     "lodash.get": "^4.4.2",
     "lodash.set": "^4.3.2",
     "lodash.unset": "^4.5.2",
@@ -91,15 +92,15 @@
   "size-limit": [
     {
       "path": "./dist/index.js",
-      "limit": "13 kB"
+      "limit": "14 kB"
     },
     {
       "path": "./dist/react-forms.esm.js",
-      "limit": "13 kB"
+      "limit": "14 kB"
     },
     {
       "path": "./dist/react-forms.umd.production.js",
-      "limit": "13 kB"
+      "limit": "14 kB"
     }
   ]
 }
